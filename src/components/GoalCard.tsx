@@ -8,8 +8,7 @@ import ScaleProgress from "./ScaleProgress";
 
 function VersionLabel({ goal }: { goal: PatientGoal }) {
   const prefix =
-    goal.goal_type === "long_term" ? "LTG" :
-    goal.goal_type === "short_term" ? "STG" : "Goal";
+    goal.goal_type === "short_term" ? "STG" : "LTG";
   return (
     <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
       {prefix} {goal.version_a}.{goal.version_b}.{goal.version_c}
