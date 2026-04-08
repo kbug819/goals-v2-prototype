@@ -128,16 +128,15 @@ function getMockAiSuggestion(roughText: string, discipline: string): AiSuggestio
 // ── AI-assisted goal text component ──
 function GoalTextWithAi({
   goalText, setGoalText, discipline,
-  measurementType, setMeasurementType,
+  setMeasurementType,
   setBaselineValue, setTargetValue,
   setCountUnit, setCountPer, setDurationUnit,
   setCustomLabel, setCustomUnit,
-  setScalePreset, setUseCustomScale, setCustomLevels,
+  setUseCustomScale, setCustomLevels,
 }: {
   goalText: string;
   setGoalText: (v: string) => void;
   discipline: string;
-  measurementType: MeasurementType;
   setMeasurementType: (v: MeasurementType) => void;
   setBaselineValue: (v: string) => void;
   setTargetValue: (v: string) => void;
@@ -146,7 +145,6 @@ function GoalTextWithAi({
   setDurationUnit: (v: string) => void;
   setCustomLabel: (v: string) => void;
   setCustomUnit: (v: string) => void;
-  setScalePreset: (v: number) => void;
   setUseCustomScale: (v: boolean) => void;
   setCustomLevels: (v: string[]) => void;
 }) {
@@ -333,7 +331,7 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
   const [goalType] = useState<GoalType>(editingGoal?.goal_type || "long_term");
   const [parentId] = useState<string | null>(editingGoal?.parent_id || null);
   const [goalText, setGoalText] = useState(editingGoal?.goal_text || "");
-  const [discipline, setDiscipline] = useState(editingGoal?.discipline || disciplines[0]);
+  const [discipline] = useState(editingGoal?.discipline || disciplines[0]);
   const [measurementType, setMeasurementType] = useState<MeasurementType>(editingGoal?.measurement_type || "percentage");
   const [baselineValue, setBaselineValue] = useState(editingGoal?.baseline_value || "");
   const [targetValue, setTargetValue] = useState(editingGoal?.target_value || "");
@@ -437,7 +435,6 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
           goalText={goalText}
           setGoalText={setGoalText}
           discipline={discipline}
-          measurementType={measurementType}
           setMeasurementType={setMeasurementType}
           setBaselineValue={setBaselineValue}
           setTargetValue={setTargetValue}
@@ -446,7 +443,6 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
           setDurationUnit={setDurationUnit}
           setCustomLabel={setCustomLabel}
           setCustomUnit={setCustomUnit}
-          setScalePreset={setScalePreset}
           setUseCustomScale={setUseCustomScale}
           setCustomLevels={setCustomLevels}
         />

@@ -142,12 +142,12 @@ function StatusActionRow({ goal, onStatusChange }: { goal: PatientGoal; onStatus
 // ── Active goal card (locked, with synopsis) ──
 function ActiveGoalCard({
   goal,
-  children: childGoals,
+  childGoals,
   onStatusChange,
   onAddStg,
 }: {
   goal: PatientGoal;
-  children: PatientGoal[];
+  childGoals: PatientGoal[];
   onStatusChange: (id: string, status: GoalStatus, comment: string) => void;
   onAddStg: (parentId: string) => void;
 }) {
@@ -239,7 +239,7 @@ function ActiveGoalCard({
       {childGoals.length > 0 && (
         <div className="mt-2 space-y-2">
           {childGoals.map((child) => (
-            <ActiveGoalCard key={child.id} goal={child} children={[]} onStatusChange={onStatusChange} onAddStg={onAddStg} />
+            <ActiveGoalCard key={child.id} goal={child} childGoals={[]} onStatusChange={onStatusChange} onAddStg={onAddStg} />
           ))}
         </div>
       )}
@@ -377,7 +377,7 @@ export default function CustomFormView() {
             <div key={goal.id}>
               <ActiveGoalCard
                 goal={goal}
-                children={getChildren(goal.id)}
+                childGoals={getChildren(goal.id)}
                 onStatusChange={handleStatusChange}
                 onAddStg={(parentId) => setAddingStgFor(parentId)}
               />
