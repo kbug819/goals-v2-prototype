@@ -1,9 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { PatientGoal, GoalStatus, MeasurementType, mockGoals, mockPatient } from "@/data/mockData";
 import GoalEditorInline from "./GoalEditorInline";
 import StatusBadge from "./StatusBadge";
+
+// ── Mock AI for STG generation ──
+interface StgAiSuggestion {
+  goalText: string;
+  measurementType: MeasurementType;
+  baselineValue: string;
+  targetValue: string;
+}
+
+function getMockStgSuggestion(roughText: string, parentGoal: PatientGoal): StgAiSuggestion {
+  const lower = roughText.toLowerCase();
+  const parentText = parentGoal.goal_text.toLowerCase();
+
+  // Match based on parent context + rough input
+  if (parentText.includes("/r/") || parentText.includes("articulation")) {
+    if (lower.includes("initial") || lower.includes("beginning")) {
+      return { goalText: "Patient will produce /r/ in initial position of words with 90% accuracy given minimal verbal cues across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "35", targetValue: "90" };
+    }
+    if (lower.includes("final") || lower.includes("end")) {
+      return { goalText: "Patient will produce /r/ in final position of words with 90% accuracy given minimal verbal cues across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "30", targetValue: "90" };
+    }
+    if (lower.includes("blend") || lower.includes("cluster")) {
+      return { goalText: "Patient will produce /r/ blends (e.g., br, cr, dr, fr, gr) at the word level with 80% accuracy given visual cues across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "25", targetValue: "80" };
+    }
+    if (lower.includes("sentence") || lower.includes("conversation")) {
+      return { goalText: "Patient will use correct /r/ production in structured sentences with 80% accuracy given minimal cueing across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "20", targetValue: "80" };
+    }
+  }
+
+  if (parentText.includes("expressive") || parentText.includes("language")) {
+    if (lower.includes("question") || lower.includes("ask")) {
+      return { goalText: "Patient will formulate grammatically correct wh-questions with 80% accuracy given visual supports across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "25", targetValue: "80" };
+    }
+    if (lower.includes("verb") || lower.includes("tense")) {
+      return { goalText: "Patient will use correct past tense verb forms in structured sentences with 80% accuracy given minimal cueing across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "30", targetValue: "80" };
+    }
+  }
+
+  if (parentText.includes("balance") || parentText.includes("mobility")) {
+    if (lower.includes("beam") || lower.includes("walk")) {
+      return { goalText: "Patient will walk across a 4-inch balance beam for 6 feet with minimal assist in 3 out of 4 trials.", measurementType: "percentage", baselineValue: "25", targetValue: "75" };
+    }
+    if (lower.includes("hop") || lower.includes("jump")) {
+      return { goalText: "Patient will perform 5 consecutive single-leg hops bilaterally maintaining balance without upper extremity support.", measurementType: "count", baselineValue: "1", targetValue: "5" };
+    }
+  }
+
+  if (parentText.includes("coordination") || parentText.includes("self-care") || parentText.includes("dressing")) {
+    if (lower.includes("button")) {
+      return { goalText: "Patient will button and unbutton 4 buttons on a shirt within 2 minutes given verbal cues only across 3 consecutive sessions.", measurementType: "duration", baselineValue: "300", targetValue: "120" };
+    }
+    if (lower.includes("zip") || lower.includes("zipper")) {
+      return { goalText: "Patient will independently zip and unzip a jacket zipper with minimal verbal cueing across 3 consecutive sessions.", measurementType: "scale", baselineValue: "maximal_assist", targetValue: "minimal_assist" };
+    }
+  }
+
+  // Generic fallback based on parent measurement type
+  return {
+    goalText: `Patient will ${roughText.toLowerCase().replace(/^patient will\s*/i, "")} with 80% accuracy given minimal cueing across 3 consecutive sessions.`,
+    measurementType: parentGoal.measurement_type,
+    baselineValue: parentGoal.baseline_value || "30",
+    targetValue: parentGoal.target_value || "80",
+  };
+}
 
 // ── STG inline mini-editor ──
 function StgEditor({ parentGoal, onSave, onCancel }: { parentGoal: PatientGoal; onSave: (goal: PatientGoal) => void; onCancel: () => void }) {
@@ -11,6 +75,27 @@ function StgEditor({ parentGoal, onSave, onCancel }: { parentGoal: PatientGoal; 
   const [measurementType, setMeasurementType] = useState<MeasurementType>(parentGoal.measurement_type);
   const [baselineValue, setBaselineValue] = useState("");
   const [targetValue, setTargetValue] = useState("");
+  const [aiState, setAiState] = useState<"idle" | "loading" | "suggestion">("idle");
+  const [suggestion, setSuggestion] = useState<StgAiSuggestion | null>(null);
+
+  const handleImprove = useCallback(() => {
+    if (!goalText.trim()) return;
+    setAiState("loading");
+    setTimeout(() => {
+      setSuggestion(getMockStgSuggestion(goalText, parentGoal));
+      setAiState("suggestion");
+    }, 1200);
+  }, [goalText, parentGoal]);
+
+  function acceptSuggestion() {
+    if (!suggestion) return;
+    setGoalText(suggestion.goalText);
+    setMeasurementType(suggestion.measurementType);
+    setBaselineValue(suggestion.baselineValue);
+    setTargetValue(suggestion.targetValue);
+    setSuggestion(null);
+    setAiState("idle");
+  }
 
   function handleSave() {
     if (!goalText.trim()) return;
@@ -44,11 +129,50 @@ function StgEditor({ parentGoal, onSave, onCancel }: { parentGoal: PatientGoal; 
       <div className="border border-indigo-200 rounded-lg bg-white p-3 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-indigo-600">New Short Term Goal</span>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {aiState === "idle" && goalText.trim().length > 5 && (
+              <button onClick={handleImprove} className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                Improve with AI
+              </button>
+            )}
+            {aiState === "loading" && (
+              <span className="inline-flex items-center gap-1 text-xs text-violet-500">
+                <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                Generating...
+              </span>
+            )}
+            <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
         </div>
-        <textarea value={goalText} onChange={(e) => setGoalText(e.target.value)} rows={2} placeholder="Patient will..." className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+        <textarea value={goalText} onChange={(e) => { setGoalText(e.target.value); if (aiState === "suggestion") { setSuggestion(null); setAiState("idle"); } }} rows={2} placeholder="Type rough notes... e.g. 'work on /r/ in initial position' or 'buttoning practice'" className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+
+        {/* AI suggestion */}
+        {aiState === "suggestion" && suggestion && (
+          <div className="border border-violet-200 rounded-lg bg-violet-50/50 px-3 py-2.5 space-y-2">
+            <div className="flex items-center gap-2">
+              <svg className="w-3 h-3 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <span className="text-xs font-medium text-violet-700">AI Suggestion</span>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-gray-400 line-through">{goalText}</p>
+              <p className="text-xs text-gray-800">{suggestion.goalText}</p>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-xs bg-violet-100 text-violet-700 rounded-full px-2 py-0.5">{suggestion.measurementType}</span>
+              <span className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">Baseline: {suggestion.baselineValue}</span>
+              <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5">Target: {suggestion.targetValue}</span>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={acceptSuggestion} className="px-2.5 py-1 text-xs font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700">Accept</button>
+              <button onClick={() => { setGoalText(suggestion.goalText); setSuggestion(null); setAiState("idle"); }} className="px-2.5 py-1 text-xs font-medium text-violet-600 border border-violet-200 rounded-lg hover:bg-violet-100">Use text only</button>
+              <button onClick={() => { setSuggestion(null); setAiState("idle"); }} className="px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700">Dismiss</button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="block text-xs text-gray-400 mb-1">Type</label>
@@ -145,11 +269,15 @@ function ActiveGoalCard({
   childGoals,
   onStatusChange,
   onAddStg,
+  onEdit,
+  onDelete,
 }: {
   goal: PatientGoal;
   childGoals: PatientGoal[];
   onStatusChange: (id: string, status: GoalStatus, comment: string) => void;
   onAddStg: (parentId: string) => void;
+  onEdit: (goal: PatientGoal) => void;
+  onDelete: (id: string) => void;
 }) {
   const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
   const latestEvent = goal.events[goal.events.length - 1];
@@ -199,12 +327,27 @@ function ActiveGoalCard({
               </>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span className="text-xs text-gray-300">Locked</span>
-          </div>
+          {goal.current_status === "pending" ? (
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => onEdit(goal)} className="text-gray-300 hover:text-indigo-500 transition-colors" title="Edit pending goal">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button onClick={() => onDelete(goal.id)} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete pending goal">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span className="text-xs text-gray-300">Locked</span>
+            </div>
+          )}
         </div>
 
         {/* Goal text */}
@@ -239,7 +382,7 @@ function ActiveGoalCard({
       {childGoals.length > 0 && (
         <div className="mt-2 space-y-2">
           {childGoals.map((child) => (
-            <ActiveGoalCard key={child.id} goal={child} childGoals={[]} onStatusChange={onStatusChange} onAddStg={onAddStg} />
+            <ActiveGoalCard key={child.id} goal={child} childGoals={[]} onStatusChange={onStatusChange} onAddStg={onAddStg} onEdit={onEdit} onDelete={onDelete} />
           ))}
         </div>
       )}
@@ -380,6 +523,8 @@ export default function CustomFormView() {
                 childGoals={getChildren(goal.id)}
                 onStatusChange={handleStatusChange}
                 onAddStg={(parentId) => setAddingStgFor(parentId)}
+                onEdit={setEditingGoal}
+                onDelete={handleDelete}
               />
               {addingStgFor === goal.id && (
                 <StgEditor parentGoal={goal} onSave={handleAddStg} onCancel={() => setAddingStgFor(null)} />

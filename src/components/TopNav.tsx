@@ -1,7 +1,6 @@
 "use client";
 
-const tabs = ["Overview", "Goals", "Custom Form"];
-const disabledTabs = new Set(["Overview"]);
+const tabs = ["Goal Tab", "Custom Form", "Visit Note"];
 
 export default function TopNav({
   patientName,
@@ -23,24 +22,19 @@ export default function TopNav({
           <span className="text-gray-900 font-medium">{patientName}</span>
         </nav>
         <nav className="flex gap-1">
-          {tabs.map((tab) => {
-            const disabled = disabledTabs.has(tab);
-            return (
-              <button
-                key={tab}
-                onClick={() => !disabled && onTabChange(tab)}
-                className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab
-                    ? "border-indigo-500 text-indigo-600"
-                    : disabled
-                    ? "border-transparent text-gray-300 cursor-default"
-                    : "border-transparent text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                {tab}
-              </button>
-            );
-          })}
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => onTabChange(tab)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab
+                  ? "border-indigo-500 text-indigo-600"
+                  : "border-transparent text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </nav>
       </div>
     </div>

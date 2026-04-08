@@ -210,7 +210,7 @@ function DataPointsPanel({ goal }: { goal: PatientGoal }) {
         {points.map((dp, i) => (
           <div key={i} className="flex items-start gap-3 text-xs">
             <span className="text-gray-400 w-20 flex-shrink-0">{dp.recorded_at}</span>
-            <span className="font-medium text-gray-700 w-20 flex-shrink-0">{dp.value}</span>
+            <span className="font-medium text-gray-700 w-20 flex-shrink-0">{dp.value.replace(/_/g, " ")}</span>
             {dp.note && <span className="text-gray-500 italic">{dp.note}</span>}
           </div>
         ))}

@@ -5,6 +5,7 @@ import TopNav from "@/components/TopNav";
 import GoalCard from "@/components/GoalCard";
 import GoalsFilter from "@/components/GoalsFilter";
 import CustomFormView from "@/components/CustomFormView";
+import VisitNoteView from "@/components/VisitNoteView";
 import { mockPatient, mockGoals, GoalStatus, PatientGoal } from "@/data/mockData";
 
 function countGoalsByStatus(goals: PatientGoal[]): Record<string, number> {
@@ -82,20 +83,15 @@ function GoalsView() {
 }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("Goals");
+  const [activeTab, setActiveTab] = useState("Goal Tab");
 
   return (
     <div className="min-h-screen bg-gray-50">
       <TopNav patientName={mockPatient.name} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === "Goals" && <GoalsView />}
+      {activeTab === "Goal Tab" && <GoalsView />}
       {activeTab === "Custom Form" && <CustomFormView />}
-      {activeTab !== "Goals" && activeTab !== "Custom Form" && (
-        <div className="max-w-4xl mx-auto px-6 py-12 text-center text-gray-400">
-          <p className="text-lg">{activeTab}</p>
-          <p className="text-sm mt-1">This tab is a placeholder</p>
-        </div>
-      )}
+      {activeTab === "Visit Note" && <VisitNoteView />}
     </div>
   );
 }
