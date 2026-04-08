@@ -1,12 +1,17 @@
 "use client";
 
-const tabs = [
-  { name: "Overview", active: false },
-  { name: "Payments", active: false },
-  { name: "Goals", active: true },
-];
+const tabs = ["Overview", "Goals", "Custom Form"];
+const disabledTabs = new Set(["Overview"]);
 
-export default function TopNav({ patientName }: { patientName: string }) {
+export default function TopNav({
+  patientName,
+  activeTab,
+  onTabChange,
+}: {
+  patientName: string;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}) {
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="px-6 pt-4 pb-0">
@@ -18,18 +23,24 @@ export default function TopNav({ patientName }: { patientName: string }) {
           <span className="text-gray-900 font-medium">{patientName}</span>
         </nav>
         <nav className="flex gap-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.name}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                tab.active
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-400 cursor-default"
-              }`}
-            >
-              {tab.name}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const disabled = disabledTabs.has(tab);
+            return (
+              <button
+                key={tab}
+                onClick={() => !disabled && onTabChange(tab)}
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab
+                    ? "border-indigo-500 text-indigo-600"
+                    : disabled
+                    ? "border-transparent text-gray-300 cursor-default"
+                    : "border-transparent text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                {tab}
+              </button>
+            );
+          })}
         </nav>
       </div>
     </div>
