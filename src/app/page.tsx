@@ -17,17 +17,25 @@ function countGoalsByStatus(goals: PatientGoal[]): Record<string, number> {
   return counts;
 }
 
-function filterGoals(goals: PatientGoal[], filter: GoalStatus | "all"): PatientGoal[] {
-  if (filter === "all") return goals;
-  return goals.filter(
-    (g) => g.current_status === filter || g.children.some((c) => c.current_status === filter)
-  );
+function filterGoals(goals: PatientGoal[], filter: GoalStatus | "all", discipline: string | "all"): PatientGoal[] {
+  let filtered = goals;
+  if (discipline !== "all") {
+    filtered = filtered.filter((g) => g.discipline === discipline);
+  }
+  if (filter !== "all") {
+    filtered = filtered.filter(
+      (g) => g.current_status === filter || g.children.some((c) => c.current_status === filter)
+    );
+  }
+  return filtered;
 }
 
 export default function Home() {
   const [filter, setFilter] = useState<GoalStatus | "all">("active");
-  const counts = countGoalsByStatus(mockGoals);
-  const filteredGoals = filterGoals(mockGoals, filter);
+  const [discipline, setDiscipline] = useState<string | "all">("all");
+  const disciplineFiltered = discipline === "all" ? mockGoals : mockGoals.filter((g) => g.discipline === discipline);
+  const counts = countGoalsByStatus(disciplineFiltered);
+  const filteredGoals = filterGoals(mockGoals, filter, discipline);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,11 +46,15 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-6 py-6">
         {/* Header row */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Goals</h2>
-            <p className="text-sm text-gray-500">{mockPatient.disciplines.join(", ")}</p>
-          </div>
-          <GoalsFilter activeFilter={filter} onFilterChange={setFilter} counts={counts} />
+          <h2 className="text-lg font-semibold text-gray-900">Goals</h2>
+          <GoalsFilter
+            activeFilter={filter}
+            onFilterChange={setFilter}
+            counts={counts}
+            disciplines={mockPatient.disciplines}
+            activeDiscipline={discipline}
+            onDisciplineChange={setDiscipline}
+          />
         </div>
 
         {/* Goal cards */}

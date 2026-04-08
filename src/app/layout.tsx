@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ambiki Goals V2 Prototype",
-  description: "Patient Goals V2 interactive prototype for Ambiki",
+  title: "Goals V2 Prototype",
+  description: "Patient Goals V2 interactive prototype",
 };
 
 export default function RootLayout({

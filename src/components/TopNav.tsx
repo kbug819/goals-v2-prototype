@@ -2,16 +2,21 @@
 
 const tabs = [
   { name: "Overview", active: false },
+  { name: "Payments", active: false },
   { name: "Goals", active: true },
-  { name: "Documents", active: false },
-  { name: "Notes", active: false },
 ];
 
 export default function TopNav({ patientName }: { patientName: string }) {
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="px-6 pt-4 pb-0">
-        <h1 className="text-xl font-semibold text-gray-900 mb-3">{patientName}</h1>
+        <nav className="text-sm text-gray-500 mb-3 flex items-center gap-1.5">
+          <span className="hover:text-gray-700 cursor-pointer">Demo org</span>
+          <span className="text-gray-300">&gt;</span>
+          <span className="hover:text-gray-700 cursor-pointer">Patients</span>
+          <span className="text-gray-300">&gt;</span>
+          <span className="text-gray-900 font-medium">{patientName}</span>
+        </nav>
         <nav className="flex gap-1">
           {tabs.map((tab) => (
             <button
