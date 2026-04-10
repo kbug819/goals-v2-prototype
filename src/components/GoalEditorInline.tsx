@@ -324,18 +324,23 @@ interface GoalEditorInlineProps {
   onSave: (goal: PatientGoal) => void;
   onCancel: () => void;
   editingGoal?: PatientGoal | null;
+  parentGoal?: PatientGoal | null;
 }
 
-export default function GoalEditorInline({ disciplines, existingGoals, onSave, onCancel, editingGoal }: GoalEditorInlineProps) {
+export default function GoalEditorInline({ disciplines, existingGoals, onSave, onCancel, editingGoal, parentGoal }: GoalEditorInlineProps) {
+  const isStg = !!parentGoal;
   const isEditing = !!editingGoal;
-  const [goalType] = useState<GoalType>(editingGoal?.goal_type || "long_term");
-  const [parentId] = useState<string | null>(editingGoal?.parent_id || null);
+  const [goalType] = useState<GoalType>(isStg ? "short_term" : (editingGoal?.goal_type || "long_term"));
+  const [parentId] = useState<string | null>(isStg ? parentGoal!.id : (editingGoal?.parent_id || null));
   const [goalText, setGoalText] = useState(editingGoal?.goal_text || "");
   const [discipline] = useState(editingGoal?.discipline || disciplines[0]);
   const [measurementType, setMeasurementType] = useState<MeasurementType>(editingGoal?.measurement_type || "percentage");
   const [baselineValue, setBaselineValue] = useState(editingGoal?.baseline_value || "");
   const [targetValue, setTargetValue] = useState(editingGoal?.target_value || "");
   const [targetDate, setTargetDate] = useState(editingGoal?.target_date || "");
+  const [currentFunctionalLevel, setCurrentFunctionalLevel] = useState(
+    editingGoal?.events?.[0]?.current_functional_level || ""
+  );
   const [scalePreset, setScalePreset] = useState(0);
   const [customLevels, setCustomLevels] = useState<string[]>([""]);
   const [useCustomScale, setUseCustomScale] = useState(false);
@@ -408,6 +413,7 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
           status: "pending",
           occurred_on: today,
           comment: "Goal created via custom form editor",
+          current_functional_level: currentFunctionalLevel || null,
           user_name: "Sam Therapist",
           created_at: now,
         }],
@@ -421,7 +427,7 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
     <div className="border-2 border-indigo-200 rounded-lg bg-white">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-indigo-50 border-b border-indigo-200 rounded-t-lg">
-        <h3 className="text-sm font-semibold text-indigo-700">{isEditing ? "Edit Goal" : "New Goal"}</h3>
+        <h3 className="text-sm font-semibold text-indigo-700">{isEditing ? "Edit Goal" : isStg ? "New Short Term Goal" : "New Goal"}</h3>
         <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -641,10 +647,22 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
           )}
         </div>
 
-        {/* Target Date */}
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1.5">Target Date</label>
-          <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        {/* Current Functional Level + Target Date */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Current Functional Level</label>
+            <textarea
+              value={currentFunctionalLevel}
+              onChange={(e) => setCurrentFunctionalLevel(e.target.value)}
+              rows={2}
+              placeholder="Describe patient's current functional status..."
+              className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Target Date</label>
+            <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
         </div>
       </div>
 
@@ -658,7 +676,7 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
           disabled={!goalText.trim() || !targetDate}
           className="px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
-          {isEditing ? "Save Changes" : "Add Goal"}
+          {isEditing ? "Save Changes" : isStg ? "Add STG" : "Add Goal"}
         </button>
       </div>
     </div>

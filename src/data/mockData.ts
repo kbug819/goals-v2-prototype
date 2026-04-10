@@ -7,6 +7,7 @@ export interface GoalEvent {
   status: GoalStatus;
   occurred_on: string;
   comment: string | null;
+  current_functional_level: string | null;
   user_name: string;
   created_at: string;
 }
@@ -86,9 +87,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "Speech",
     current_status: "active",
     events: [
-      { id: "ev-1", status: "pending", occurred_on: "2026-03-01", comment: "Goal created from evaluation findings", user_name: "Sam Therapist", created_at: "2026-03-01T10:00:00Z" },
-      { id: "ev-2", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
-      { id: "ev-2b", status: "active", occurred_on: "2026-04-02", comment: "Progressing well — responding to visual cues for /r/ blends, continuing current approach", user_name: "Sam Therapist", created_at: "2026-04-02T15:00:00Z" },
+      { id: "ev-1", status: "pending", occurred_on: "2026-03-01", comment: "Goal created from evaluation findings", current_functional_level: "Produces /r/ in initial position with maximal verbal cues in structured tasks only; inconsistent in conversational speech", user_name: "Sam Therapist", created_at: "2026-03-01T10:00:00Z" },
+      { id: "ev-2", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Produces /r/ in initial position with maximal verbal cues in structured tasks only; inconsistent in conversational speech", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
+      { id: "ev-2b", status: "active", occurred_on: "2026-04-02", comment: "Progressing well — responding to visual cues for /r/ blends, continuing current approach", current_functional_level: "Producing /r/ at 72% across positions; initial position strongest at 85%, final position at 65%", user_name: "Sam Therapist", created_at: "2026-04-02T15:00:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "45", activity_name: "Articulation drills", note: "Initial baseline", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -117,9 +118,9 @@ export const mockGoals: PatientGoal[] = [
         discipline: "Speech",
         current_status: "met",
         events: [
-          { id: "ev-3", status: "pending", occurred_on: "2026-03-01", comment: "Created as STG under articulation LTG", user_name: "Sam Therapist", created_at: "2026-03-01T10:01:00Z" },
-          { id: "ev-4", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
-          { id: "ev-6", status: "met", occurred_on: "2026-04-01", comment: "Patient achieved 92% accuracy across 3 consecutive sessions", user_name: "Sam Therapist", created_at: "2026-04-01T14:00:00Z" },
+          { id: "ev-3", status: "pending", occurred_on: "2026-03-01", comment: "Created as STG under articulation LTG", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-03-01T10:01:00Z" },
+          { id: "ev-4", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
+          { id: "ev-6", status: "met", occurred_on: "2026-04-01", comment: "Patient achieved 92% accuracy across 3 consecutive sessions", current_functional_level: "Producing /r/ in initial position at 92% accuracy with minimal verbal cues in structured and unstructured tasks", user_name: "Sam Therapist", created_at: "2026-04-01T14:00:00Z" },
         ],
         data_points: [
           { recorded_at: "2026-03-05", value: "45", activity_name: "Word-level drills", note: "Produced /r/ in initial with verbal cue", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -149,9 +150,9 @@ export const mockGoals: PatientGoal[] = [
         discipline: "Speech",
         current_status: "active",
         events: [
-          { id: "ev-5", status: "pending", occurred_on: "2026-03-01", comment: "Created as STG under articulation LTG", user_name: "Sam Therapist", created_at: "2026-03-01T10:02:00Z" },
-          { id: "ev-7", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
-          { id: "ev-7b", status: "active", occurred_on: "2026-04-02", comment: "Still working on -er endings, adding modeling strategies next session", user_name: "Sam Therapist", created_at: "2026-04-02T15:05:00Z" },
+          { id: "ev-5", status: "pending", occurred_on: "2026-03-01", comment: "Created as STG under articulation LTG", current_functional_level: "Produces /r/ in final position inconsistently; struggles with -er endings", user_name: "Sam Therapist", created_at: "2026-03-01T10:02:00Z" },
+          { id: "ev-7", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Produces /r/ in final position inconsistently; struggles with -er endings", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
+          { id: "ev-7b", status: "active", occurred_on: "2026-04-02", comment: "Still working on -er endings, adding modeling strategies next session", current_functional_level: "Final /r/ at 68% accuracy; -er endings remain difficult, responds to visual modeling", user_name: "Sam Therapist", created_at: "2026-04-02T15:05:00Z" },
         ],
         data_points: [
           { recorded_at: "2026-03-05", value: "40", activity_name: null, note: null, recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -185,9 +186,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "Speech",
     current_status: "active",
     events: [
-      { id: "ev-8", status: "pending", occurred_on: "2026-03-01", comment: "Goal created to address expressive language delays", user_name: "Sam Therapist", created_at: "2026-03-01T10:05:00Z" },
-      { id: "ev-9", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
-      { id: "ev-9b", status: "active", occurred_on: "2026-04-02", comment: "Holding steady at moderate assist — beginning to use sentence starters independently", user_name: "Sam Therapist", created_at: "2026-04-02T15:10:00Z" },
+      { id: "ev-8", status: "pending", occurred_on: "2026-03-01", comment: "Goal created to address expressive language delays", current_functional_level: "Formulates 2-3 word utterances to request preferred items; relies on gestures for complex needs", user_name: "Sam Therapist", created_at: "2026-03-01T10:05:00Z" },
+      { id: "ev-9", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Formulates 2-3 word utterances to request preferred items; relies on gestures for complex needs", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
+      { id: "ev-9b", status: "active", occurred_on: "2026-04-02", comment: "Holding steady at moderate assist — beginning to use sentence starters independently", current_functional_level: "Holding at moderate assist for sentence formulation; beginning to use sentence starters independently", user_name: "Sam Therapist", created_at: "2026-04-02T15:10:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "maximal_assist", activity_name: "Structured play", note: "Baseline assessment", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -215,9 +216,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "Speech",
     current_status: "active",
     events: [
-      { id: "ev-10", status: "pending", occurred_on: "2026-03-15", comment: "Standalone goal added to track MLU progress", user_name: "Sam Therapist", created_at: "2026-03-15T09:00:00Z" },
-      { id: "ev-11", status: "active", occurred_on: "2026-03-15", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-15T09:30:00Z" },
-      { id: "ev-11b", status: "active", occurred_on: "2026-04-02", comment: "Good gains — using more descriptors and conjunctions in spontaneous speech", user_name: "Sam Therapist", created_at: "2026-04-02T15:15:00Z" },
+      { id: "ev-10", status: "pending", occurred_on: "2026-03-15", comment: "Standalone goal added to track MLU progress", current_functional_level: "Produces /r/ in initial position with maximal verbal cues in structured tasks only; inconsistent in conversational speech", user_name: "Sam Therapist", created_at: "2026-03-15T09:00:00Z" },
+      { id: "ev-11", status: "active", occurred_on: "2026-03-15", comment: "Activated on POC signing", current_functional_level: "Spontaneous utterances average 2.5 words; uses mostly nouns and verbs with limited descriptors", user_name: "Sam Therapist", created_at: "2026-03-15T09:30:00Z" },
+      { id: "ev-11b", status: "active", occurred_on: "2026-04-02", comment: "Good gains — using more descriptors and conjunctions in spontaneous speech", current_functional_level: "MLU at 3.1 words; using more descriptors and conjunctions in spontaneous speech", user_name: "Sam Therapist", created_at: "2026-04-02T15:15:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-19", value: "2.5", activity_name: null, note: "Baseline", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -245,9 +246,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "Speech",
     current_status: "discontinued",
     events: [
-      { id: "ev-12", status: "pending", occurred_on: "2026-01-15", comment: "Goal created for receptive language", user_name: "Sam Therapist", created_at: "2026-01-15T10:00:00Z" },
-      { id: "ev-13", status: "active", occurred_on: "2026-01-15", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-01-15T10:30:00Z" },
-      { id: "ev-14", status: "discontinued", occurred_on: "2026-03-20", comment: "Reassessing approach - patient responding better to visual supports. Will create new goal with modified strategy.", user_name: "Sam Therapist", created_at: "2026-03-20T15:00:00Z" },
+      { id: "ev-12", status: "pending", occurred_on: "2026-01-15", comment: "Goal created for receptive language", current_functional_level: "Produces /r/ in initial position with maximal verbal cues in structured tasks only; inconsistent in conversational speech", user_name: "Sam Therapist", created_at: "2026-01-15T10:00:00Z" },
+      { id: "ev-13", status: "active", occurred_on: "2026-01-15", comment: "Activated on POC signing", current_functional_level: "Follows 1-step directions consistently; 2-step directions require repetition and gestural cues", user_name: "Sam Therapist", created_at: "2026-01-15T10:30:00Z" },
+      { id: "ev-14", status: "discontinued", occurred_on: "2026-03-20", comment: "Reassessing approach - patient responding better to visual supports. Will create new goal with modified strategy.", current_functional_level: "Minimal progress with verbal-only approach; patient responding better to visual supports", user_name: "Sam Therapist", created_at: "2026-03-20T15:00:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-01-22", value: "35", activity_name: null, note: null, recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -276,9 +277,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "Speech",
     current_status: "active",
     events: [
-      { id: "ev-15", status: "pending", occurred_on: "2026-03-01", comment: "Goal created to increase spontaneous requesting", user_name: "Sam Therapist", created_at: "2026-03-01T10:10:00Z" },
-      { id: "ev-16", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
-      { id: "ev-16b", status: "active", occurred_on: "2026-04-02", comment: "Making progress — requesting preferred items without prompts, working on varied contexts", user_name: "Sam Therapist", created_at: "2026-04-02T15:20:00Z" },
+      { id: "ev-15", status: "pending", occurred_on: "2026-03-01", comment: "Goal created to increase spontaneous requesting", current_functional_level: "Produces /r/ in initial position with maximal verbal cues in structured tasks only; inconsistent in conversational speech", user_name: "Sam Therapist", created_at: "2026-03-01T10:10:00Z" },
+      { id: "ev-16", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Requests preferred items only with direct prompting; does not initiate spontaneously", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
+      { id: "ev-16b", status: "active", occurred_on: "2026-04-02", comment: "Making progress — requesting preferred items without prompts, working on varied contexts", current_functional_level: "Requesting preferred items without prompts; working on varied contexts", user_name: "Sam Therapist", created_at: "2026-04-02T15:20:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "2", activity_name: null, note: "Baseline - only requests with prompting", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -309,9 +310,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "OT",
     current_status: "active",
     events: [
-      { id: "ev-17", status: "pending", occurred_on: "2026-03-01", comment: "Goal created to address attention and task persistence", user_name: "Sam Therapist", created_at: "2026-03-01T11:00:00Z" },
-      { id: "ev-18", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
-      { id: "ev-18b", status: "active", occurred_on: "2026-04-02", comment: "Steady improvement — sensory breaks helping, up to 105s without redirection", user_name: "Sam Therapist", created_at: "2026-04-02T15:25:00Z" },
+      { id: "ev-17", status: "pending", occurred_on: "2026-03-01", comment: "Goal created to address attention and task persistence", current_functional_level: "Produces /r/ in initial position with maximal verbal cues in structured tasks only; inconsistent in conversational speech", user_name: "Sam Therapist", created_at: "2026-03-01T11:00:00Z" },
+      { id: "ev-18", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Attends to tabletop activities for ~30 seconds before requiring redirection", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
+      { id: "ev-18b", status: "active", occurred_on: "2026-04-02", comment: "Steady improvement — sensory breaks helping, up to 105s without redirection", current_functional_level: "Sustaining attention for 105 seconds with sensory breaks; steady improvement", user_name: "Sam Therapist", created_at: "2026-04-02T15:25:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "30", activity_name: null, note: "Baseline", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -341,9 +342,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "OT",
     current_status: "active",
     events: [
-      { id: "ev-19", status: "pending", occurred_on: "2026-03-01", comment: "Goal created for fine motor independence", user_name: "Sam Therapist", created_at: "2026-03-01T11:05:00Z" },
-      { id: "ev-20", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
-      { id: "ev-20b", status: "active", occurred_on: "2026-04-02", comment: "Not yet achieved — forming first loop independently, still needs help with second loop", user_name: "Sam Therapist", created_at: "2026-04-02T15:30:00Z" },
+      { id: "ev-19", status: "pending", occurred_on: "2026-03-01", comment: "Goal created for fine motor independence", current_functional_level: "Produces /r/ in initial position with maximal verbal cues in structured tasks only; inconsistent in conversational speech", user_name: "Sam Therapist", created_at: "2026-03-01T11:05:00Z" },
+      { id: "ev-20", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Cannot initiate shoe tying without hand-over-hand assistance", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
+      { id: "ev-20b", status: "active", occurred_on: "2026-04-02", comment: "Not yet achieved — forming first loop independently, still needs help with second loop", current_functional_level: "Forming first loop independently; needs help with second loop", user_name: "Sam Therapist", created_at: "2026-04-02T15:30:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "false", activity_name: "Shoe tying practice", note: "Cannot initiate without hand-over-hand", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -371,7 +372,7 @@ export const mockGoals: PatientGoal[] = [
     discipline: "OT",
     current_status: "pending",
     events: [
-      { id: "ev-21", status: "pending", occurred_on: "2026-04-08", comment: "Added to initial OT evaluation", user_name: "Sam Therapist", created_at: "2026-04-08T09:00:00Z" },
+      { id: "ev-21", status: "pending", occurred_on: "2026-04-08", comment: "Added to initial OT evaluation", current_functional_level: "Requires maximal physical assist for bilateral coordination during self-care", user_name: "Sam Therapist", created_at: "2026-04-08T09:00:00Z" },
     ],
     data_points: [],
     children: [
@@ -394,7 +395,7 @@ export const mockGoals: PatientGoal[] = [
         discipline: "OT",
         current_status: "pending",
         events: [
-          { id: "ev-22", status: "pending", occurred_on: "2026-04-08", comment: "Added to initial OT evaluation", user_name: "Sam Therapist", created_at: "2026-04-08T09:01:00Z" },
+          { id: "ev-22", status: "pending", occurred_on: "2026-04-08", comment: "Added to initial OT evaluation", current_functional_level: "Cannot manipulate buttons without hand-over-hand assistance", user_name: "Sam Therapist", created_at: "2026-04-08T09:01:00Z" },
         ],
         data_points: [],
         children: [],
@@ -422,7 +423,7 @@ export const mockGoals: PatientGoal[] = [
     discipline: "OT",
     current_status: "pending",
     events: [
-      { id: "ev-23", status: "pending", occurred_on: "2026-04-05", comment: "Added to OT plan of care renewal", user_name: "Sam Therapist", created_at: "2026-04-05T14:00:00Z" },
+      { id: "ev-23", status: "pending", occurred_on: "2026-04-05", comment: "Added to OT plan of care renewal", current_functional_level: "Uses pincer grasp inconsistently; drops small objects frequently", user_name: "Sam Therapist", created_at: "2026-04-05T14:00:00Z" },
     ],
     data_points: [],
     children: [],
@@ -450,9 +451,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "PT",
     current_status: "active",
     events: [
-      { id: "ev-24", status: "pending", occurred_on: "2026-02-15", comment: "Goal created from PT evaluation", user_name: "Sam Therapist", created_at: "2026-02-15T09:00:00Z" },
-      { id: "ev-25", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
-      { id: "ev-25b", status: "active", occurred_on: "2026-04-03", comment: "Moving to minimal assist — navigating wood chips and grass with standby only", user_name: "Sam Therapist", created_at: "2026-04-03T14:00:00Z" },
+      { id: "ev-24", status: "pending", occurred_on: "2026-02-15", comment: "Goal created from PT evaluation", current_functional_level: "Requires hand-held support on all uneven surfaces; loses balance on grass and wood chips", user_name: "Sam Therapist", created_at: "2026-02-15T09:00:00Z" },
+      { id: "ev-25", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", current_functional_level: "Requires hand-held support on all uneven surfaces; loses balance on grass and wood chips", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
+      { id: "ev-25b", status: "active", occurred_on: "2026-04-03", comment: "Moving to minimal assist — navigating wood chips and grass with standby only", current_functional_level: "Navigating wood chips and grass with standby assist; minimal assist on uneven playground surfaces", user_name: "Sam Therapist", created_at: "2026-04-03T14:00:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-02-20", value: "maximal_assist", activity_name: "Outdoor walking", note: "Baseline - needs hand-held support on all surfaces", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -480,9 +481,9 @@ export const mockGoals: PatientGoal[] = [
         discipline: "PT",
         current_status: "active",
         events: [
-          { id: "ev-26", status: "pending", occurred_on: "2026-02-15", comment: "Created as STG under balance LTG", user_name: "Sam Therapist", created_at: "2026-02-15T09:01:00Z" },
-          { id: "ev-27", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
-          { id: "ev-27b", status: "active", occurred_on: "2026-04-03", comment: "Plateaued at 2/4 trials — adding lateral weight shift exercises to support progress", user_name: "Sam Therapist", created_at: "2026-04-03T14:05:00Z" },
+          { id: "ev-26", status: "pending", occurred_on: "2026-02-15", comment: "Created as STG under balance LTG", current_functional_level: "Completes 2 feet on balance beam with maximal assist; falls off without support", user_name: "Sam Therapist", created_at: "2026-02-15T09:01:00Z" },
+          { id: "ev-27", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", current_functional_level: "Completes 2 feet on balance beam with maximal assist; falls off without support", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
+          { id: "ev-27b", status: "active", occurred_on: "2026-04-03", comment: "Plateaued at 2/4 trials — adding lateral weight shift exercises to support progress", current_functional_level: "Completing 4 feet on beam at 2/4 trials; plateaued, adding lateral weight shift exercises", user_name: "Sam Therapist", created_at: "2026-04-03T14:05:00Z" },
         ],
         data_points: [
           { recorded_at: "2026-02-20", value: "25", activity_name: "Balance beam walk", note: "1/4 trials - falls off after 2 feet", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -513,9 +514,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "PT",
     current_status: "met",
     events: [
-      { id: "ev-28", status: "pending", occurred_on: "2026-02-15", comment: "Goal for stair navigation safety", user_name: "Sam Therapist", created_at: "2026-02-15T09:05:00Z" },
-      { id: "ev-29", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
-      { id: "ev-30", status: "met", occurred_on: "2026-03-27", comment: "Patient demonstrated reciprocal stair pattern with rail x3 consecutive sessions", user_name: "Sam Therapist", created_at: "2026-03-27T11:00:00Z" },
+      { id: "ev-28", status: "pending", occurred_on: "2026-02-15", comment: "Goal for stair navigation safety", current_functional_level: "Uses step-to pattern for stairs; requires rail and verbal cueing", user_name: "Sam Therapist", created_at: "2026-02-15T09:05:00Z" },
+      { id: "ev-29", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", current_functional_level: "Uses step-to pattern for stairs; requires rail and verbal cueing", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
+      { id: "ev-30", status: "met", occurred_on: "2026-03-27", comment: "Patient demonstrated reciprocal stair pattern with rail x3 consecutive sessions", current_functional_level: "Demonstrated reciprocal stair pattern with rail consistently across 3 sessions", user_name: "Sam Therapist", created_at: "2026-03-27T11:00:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-02-20", value: "false", activity_name: null, note: "Step-to pattern only, both feet each step", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -544,9 +545,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "PT",
     current_status: "active",
     events: [
-      { id: "ev-31", status: "pending", occurred_on: "2026-02-15", comment: "Goal created for lower extremity stability", user_name: "Sam Therapist", created_at: "2026-02-15T09:10:00Z" },
-      { id: "ev-32", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
-      { id: "ev-32b", status: "active", occurred_on: "2026-04-03", comment: "Improving symmetry between sides — right at 10s, left catching up at 8s", user_name: "Sam Therapist", created_at: "2026-04-03T14:10:00Z" },
+      { id: "ev-31", status: "pending", occurred_on: "2026-02-15", comment: "Goal created for lower extremity stability", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-02-15T09:10:00Z" },
+      { id: "ev-32", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", current_functional_level: "Maintains single-leg stance for 3 seconds bilaterally; loses balance without UE support", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
+      { id: "ev-32b", status: "active", occurred_on: "2026-04-03", comment: "Improving symmetry between sides — right at 10s, left catching up at 8s", current_functional_level: "Right leg at 10s, left at 8s; improving symmetry", user_name: "Sam Therapist", created_at: "2026-04-03T14:10:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-02-20", value: "3", activity_name: "Single-leg stance", note: "Baseline - bilateral", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -578,9 +579,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "OT",
     current_status: "active",
     events: [
-      { id: "ev-33", status: "pending", occurred_on: "2026-03-01", comment: "Goal created for handwriting remediation", user_name: "Sam Therapist", created_at: "2026-03-01T11:15:00Z" },
-      { id: "ev-34", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
-      { id: "ev-34b", status: "active", occurred_on: "2026-04-02", comment: "At moderate assist now — writing first name with moderate cueing, working on letter sizing", user_name: "Sam Therapist", created_at: "2026-04-02T15:35:00Z" },
+      { id: "ev-33", status: "pending", occurred_on: "2026-03-01", comment: "Goal created for handwriting remediation", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-03-01T11:15:00Z" },
+      { id: "ev-34", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Cannot form letters without hand-over-hand assistance", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
+      { id: "ev-34b", status: "active", occurred_on: "2026-04-02", comment: "At moderate assist now — writing first name with moderate cueing, working on letter sizing", current_functional_level: "Writing first name with moderate cueing; working on letter sizing", user_name: "Sam Therapist", created_at: "2026-04-02T15:35:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "dependent", activity_name: null, note: "Cannot form letters without hand-over-hand", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -608,9 +609,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "OT",
     current_status: "active",
     events: [
-      { id: "ev-35", status: "pending", occurred_on: "2026-03-01", comment: "Goal for self-care independence", user_name: "Sam Therapist", created_at: "2026-03-01T11:20:00Z" },
-      { id: "ev-36", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
-      { id: "ev-36b", status: "active", occurred_on: "2026-04-02", comment: "Up to 4 fasteners — managing large buttons now, snaps and zipper pull consistent", user_name: "Sam Therapist", created_at: "2026-04-02T15:40:00Z" },
+      { id: "ev-35", status: "pending", occurred_on: "2026-03-01", comment: "Goal for self-care independence", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-03-01T11:20:00Z" },
+      { id: "ev-36", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Manages large snaps only; cannot manipulate buttons or zippers", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
+      { id: "ev-36b", status: "active", occurred_on: "2026-04-02", comment: "Up to 4 fasteners — managing large buttons now, snaps and zipper pull consistent", current_functional_level: "Managing 4 fasteners including large buttons, snaps, and zipper pull", user_name: "Sam Therapist", created_at: "2026-04-02T15:40:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "2", activity_name: null, note: "Can manage large snaps only", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -638,9 +639,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "OT",
     current_status: "active",
     events: [
-      { id: "ev-37", status: "pending", occurred_on: "2026-03-01", comment: "Goal for scissor skill development", user_name: "Sam Therapist", created_at: "2026-03-01T11:25:00Z" },
-      { id: "ev-38", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
-      { id: "ev-38b", status: "active", occurred_on: "2026-04-02", comment: "Transitioned to standard scissors — accuracy improving, still working on curves", user_name: "Sam Therapist", created_at: "2026-04-02T15:45:00Z" },
+      { id: "ev-37", status: "pending", occurred_on: "2026-03-01", comment: "Goal for scissor skill development", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-03-01T11:25:00Z" },
+      { id: "ev-38", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Difficulty maintaining grasp on scissors; cannot coordinate bilateral hands for cutting", user_name: "Sam Therapist", created_at: "2026-03-01T11:30:00Z" },
+      { id: "ev-38b", status: "active", occurred_on: "2026-04-02", comment: "Transitioned to standard scissors — accuracy improving, still working on curves", current_functional_level: "Using standard scissors; accuracy improving on straight lines, still working on curves", user_name: "Sam Therapist", created_at: "2026-04-02T15:45:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "20", activity_name: null, note: "Baseline - difficulty with grasp and bilateral coordination", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -669,9 +670,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "PT",
     current_status: "active",
     events: [
-      { id: "ev-39", status: "pending", occurred_on: "2026-02-15", comment: "Goal created for ankle strengthening", user_name: "Sam Therapist", created_at: "2026-02-15T09:15:00Z" },
-      { id: "ev-40", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
-      { id: "ev-40b", status: "active", occurred_on: "2026-04-03", comment: "At 7 reps freestanding — good progress, targeting 10 by next month", user_name: "Sam Therapist", created_at: "2026-04-03T14:15:00Z" },
+      { id: "ev-39", status: "pending", occurred_on: "2026-02-15", comment: "Goal created for ankle strengthening", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-02-15T09:15:00Z" },
+      { id: "ev-40", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
+      { id: "ev-40b", status: "active", occurred_on: "2026-04-03", comment: "At 7 reps freestanding — good progress, targeting 10 by next month", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-04-03T14:15:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-02-20", value: "3", activity_name: null, note: "Baseline - loses balance after 3", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -702,9 +703,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "PT",
     current_status: "active",
     events: [
-      { id: "ev-41", status: "pending", occurred_on: "2026-02-15", comment: "Goal created for transfer safety", user_name: "Sam Therapist", created_at: "2026-02-15T09:20:00Z" },
-      { id: "ev-42", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
-      { id: "ev-42b", status: "active", occurred_on: "2026-04-03", comment: "At minimal assist — using furniture to pull to stand, not quite at supervision yet", user_name: "Sam Therapist", created_at: "2026-04-03T14:20:00Z" },
+      { id: "ev-41", status: "pending", occurred_on: "2026-02-15", comment: "Goal created for transfer safety", current_functional_level: "Requires moderate physical assist at hips for floor-to-stand transitions", user_name: "Sam Therapist", created_at: "2026-02-15T09:20:00Z" },
+      { id: "ev-42", status: "active", occurred_on: "2026-02-15", comment: "Activated on POC signing", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-02-15T09:30:00Z" },
+      { id: "ev-42b", status: "active", occurred_on: "2026-04-03", comment: "At minimal assist — using furniture to pull to stand, not quite at supervision yet", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-04-03T14:20:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-02-20", value: "moderate_assist", activity_name: null, note: "Needs assist at hips for floor-to-stand", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -734,9 +735,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "Speech",
     current_status: "active",
     events: [
-      { id: "ev-43", status: "pending", occurred_on: "2026-03-01", comment: "Goal for morphological marker development", user_name: "Sam Therapist", created_at: "2026-03-01T10:15:00Z" },
-      { id: "ev-44", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
-      { id: "ev-44b", status: "active", occurred_on: "2026-04-02", comment: "At 50% — generalizing to novel verbs in structured tasks, not yet in conversation", user_name: "Sam Therapist", created_at: "2026-04-02T15:50:00Z" },
+      { id: "ev-43", status: "pending", occurred_on: "2026-03-01", comment: "Goal for morphological marker development", current_functional_level: "Omits past tense -ed in most spontaneous speech contexts", user_name: "Sam Therapist", created_at: "2026-03-01T10:15:00Z" },
+      { id: "ev-44", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
+      { id: "ev-44b", status: "active", occurred_on: "2026-04-02", comment: "At 50% — generalizing to novel verbs in structured tasks, not yet in conversation", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-04-02T15:50:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "30", activity_name: null, note: "Baseline - omits -ed in most contexts", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -764,9 +765,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "Speech",
     current_status: "active",
     events: [
-      { id: "ev-45", status: "pending", occurred_on: "2026-03-01", comment: "Goal for pragmatic language and social communication", user_name: "Sam Therapist", created_at: "2026-03-01T10:20:00Z" },
-      { id: "ev-46", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
-      { id: "ev-46b", status: "active", occurred_on: "2026-04-02", comment: "Up to 3 turns — starting to ask questions during play, needs support for topic maintenance", user_name: "Sam Therapist", created_at: "2026-04-02T15:55:00Z" },
+      { id: "ev-45", status: "pending", occurred_on: "2026-03-01", comment: "Goal for pragmatic language and social communication", current_functional_level: "Responds to conversational bids but rarely initiates; limited to 1 turn per interaction", user_name: "Sam Therapist", created_at: "2026-03-01T10:20:00Z" },
+      { id: "ev-46", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
+      { id: "ev-46b", status: "active", occurred_on: "2026-04-02", comment: "Up to 3 turns — starting to ask questions during play, needs support for topic maintenance", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-04-02T15:55:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "1", activity_name: null, note: "Baseline - responds but rarely initiates", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },
@@ -796,9 +797,9 @@ export const mockGoals: PatientGoal[] = [
     discipline: "Speech",
     current_status: "active",
     events: [
-      { id: "ev-47", status: "pending", occurred_on: "2026-03-01", comment: "Goal created for oral motor and feeding therapy", user_name: "Sam Therapist", created_at: "2026-03-01T10:25:00Z" },
-      { id: "ev-48", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
-      { id: "ev-48b", status: "active", occurred_on: "2026-04-02", comment: "Moved to moderate assist — managing soft solids with verbal cues, continuing texture progression", user_name: "Sam Therapist", created_at: "2026-04-02T16:00:00Z" },
+      { id: "ev-47", status: "pending", occurred_on: "2026-03-01", comment: "Goal created for oral motor and feeding therapy", current_functional_level: "Difficulty managing purees without support; limited oral motor coordination", user_name: "Sam Therapist", created_at: "2026-03-01T10:25:00Z" },
+      { id: "ev-48", status: "active", occurred_on: "2026-03-01", comment: "Activated on POC signing", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-03-01T10:30:00Z" },
+      { id: "ev-48b", status: "active", occurred_on: "2026-04-02", comment: "Moved to moderate assist — managing soft solids with verbal cues, continuing texture progression", current_functional_level: "Cannot produce /r/ in initial position without maximal verbal and visual cues", user_name: "Sam Therapist", created_at: "2026-04-02T16:00:00Z" },
     ],
     data_points: [
       { recorded_at: "2026-03-05", value: "maximal_assist", activity_name: null, note: "Baseline - difficulty managing purees without support", recorded_by: "Sam Therapist", visit_note_id: "vn-demo" },

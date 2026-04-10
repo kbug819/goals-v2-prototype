@@ -114,6 +114,7 @@ export default function GoalEditorModal({ disciplines, existingGoals, onSave, on
           status: "pending",
           occurred_on: today,
           comment: "Goal created via custom form editor",
+          current_functional_level: null,
           user_name: "Sam Therapist",
           created_at: now,
         },

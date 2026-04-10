@@ -57,7 +57,7 @@ function GoalsView() {
       {/* Goal cards */}
       <div className="space-y-3">
         {filteredGoals.length > 0 ? (
-          filteredGoals.map((goal) => <GoalCard key={goal.id} goal={goal} />)
+          filteredGoals.map((goal) => <GoalCard key={goal.id} goal={goal} activeFilter={filter} />)
         ) : (
           <div className="text-center py-12 text-gray-400">
             <p className="text-lg">No goals match this filter</p>

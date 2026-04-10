@@ -1,214 +1,24 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { PatientGoal, GoalStatus, MeasurementType, mockGoals, mockPatient } from "@/data/mockData";
+import { useState } from "react";
+import { PatientGoal, GoalStatus, mockGoals, mockPatient } from "@/data/mockData";
 import GoalEditorInline from "./GoalEditorInline";
 import StatusBadge from "./StatusBadge";
 
-// ── Mock AI for STG generation ──
-interface StgAiSuggestion {
-  goalText: string;
-  measurementType: MeasurementType;
-  baselineValue: string;
-  targetValue: string;
-}
-
-function getMockStgSuggestion(roughText: string, parentGoal: PatientGoal): StgAiSuggestion {
-  const lower = roughText.toLowerCase();
-  const parentText = parentGoal.goal_text.toLowerCase();
-
-  // Match based on parent context + rough input
-  if (parentText.includes("/r/") || parentText.includes("articulation")) {
-    if (lower.includes("initial") || lower.includes("beginning")) {
-      return { goalText: "Patient will produce /r/ in initial position of words with 90% accuracy given minimal verbal cues across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "35", targetValue: "90" };
-    }
-    if (lower.includes("final") || lower.includes("end")) {
-      return { goalText: "Patient will produce /r/ in final position of words with 90% accuracy given minimal verbal cues across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "30", targetValue: "90" };
-    }
-    if (lower.includes("blend") || lower.includes("cluster")) {
-      return { goalText: "Patient will produce /r/ blends (e.g., br, cr, dr, fr, gr) at the word level with 80% accuracy given visual cues across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "25", targetValue: "80" };
-    }
-    if (lower.includes("sentence") || lower.includes("conversation")) {
-      return { goalText: "Patient will use correct /r/ production in structured sentences with 80% accuracy given minimal cueing across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "20", targetValue: "80" };
-    }
-  }
-
-  if (parentText.includes("expressive") || parentText.includes("language")) {
-    if (lower.includes("question") || lower.includes("ask")) {
-      return { goalText: "Patient will formulate grammatically correct wh-questions with 80% accuracy given visual supports across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "25", targetValue: "80" };
-    }
-    if (lower.includes("verb") || lower.includes("tense")) {
-      return { goalText: "Patient will use correct past tense verb forms in structured sentences with 80% accuracy given minimal cueing across 3 consecutive sessions.", measurementType: "percentage", baselineValue: "30", targetValue: "80" };
-    }
-  }
-
-  if (parentText.includes("balance") || parentText.includes("mobility")) {
-    if (lower.includes("beam") || lower.includes("walk")) {
-      return { goalText: "Patient will walk across a 4-inch balance beam for 6 feet with minimal assist in 3 out of 4 trials.", measurementType: "percentage", baselineValue: "25", targetValue: "75" };
-    }
-    if (lower.includes("hop") || lower.includes("jump")) {
-      return { goalText: "Patient will perform 5 consecutive single-leg hops bilaterally maintaining balance without upper extremity support.", measurementType: "count", baselineValue: "1", targetValue: "5" };
-    }
-  }
-
-  if (parentText.includes("coordination") || parentText.includes("self-care") || parentText.includes("dressing")) {
-    if (lower.includes("button")) {
-      return { goalText: "Patient will button and unbutton 4 buttons on a shirt within 2 minutes given verbal cues only across 3 consecutive sessions.", measurementType: "duration", baselineValue: "300", targetValue: "120" };
-    }
-    if (lower.includes("zip") || lower.includes("zipper")) {
-      return { goalText: "Patient will independently zip and unzip a jacket zipper with minimal verbal cueing across 3 consecutive sessions.", measurementType: "scale", baselineValue: "maximal_assist", targetValue: "minimal_assist" };
-    }
-  }
-
-  // Generic fallback based on parent measurement type
-  return {
-    goalText: `Patient will ${roughText.toLowerCase().replace(/^patient will\s*/i, "")} with 80% accuracy given minimal cueing across 3 consecutive sessions.`,
-    measurementType: parentGoal.measurement_type,
-    baselineValue: parentGoal.baseline_value || "30",
-    targetValue: parentGoal.target_value || "80",
-  };
-}
-
-// ── STG inline mini-editor ──
-function StgEditor({ parentGoal, onSave, onCancel }: { parentGoal: PatientGoal; onSave: (goal: PatientGoal) => void; onCancel: () => void }) {
-  const [goalText, setGoalText] = useState("");
-  const [measurementType, setMeasurementType] = useState<MeasurementType>(parentGoal.measurement_type);
-  const [baselineValue, setBaselineValue] = useState("");
-  const [targetValue, setTargetValue] = useState("");
-  const [aiState, setAiState] = useState<"idle" | "loading" | "suggestion">("idle");
-  const [suggestion, setSuggestion] = useState<StgAiSuggestion | null>(null);
-
-  const handleImprove = useCallback(() => {
-    if (!goalText.trim()) return;
-    setAiState("loading");
-    setTimeout(() => {
-      setSuggestion(getMockStgSuggestion(goalText, parentGoal));
-      setAiState("suggestion");
-    }, 1200);
-  }, [goalText, parentGoal]);
-
-  function acceptSuggestion() {
-    if (!suggestion) return;
-    setGoalText(suggestion.goalText);
-    setMeasurementType(suggestion.measurementType);
-    setBaselineValue(suggestion.baselineValue);
-    setTargetValue(suggestion.targetValue);
-    setSuggestion(null);
-    setAiState("idle");
-  }
-
-  function handleSave() {
-    if (!goalText.trim()) return;
-    const now = new Date().toISOString();
-    const today = now.slice(0, 10);
-    onSave({
-      id: `pg-stg-${Date.now()}`,
-      goal_type: "short_term",
-      parent_id: parentGoal.id,
-      goal_text: goalText,
-      measurement_type: measurementType,
-      baseline_value: baselineValue || null,
-      target_value: targetValue || null,
-      measurement_config: parentGoal.measurement_config,
-      version_a: parentGoal.version_a,
-      version_b: 1,
-      version_c: 0,
-      start_date: today,
-      target_date: null,
-      met_on: null,
-      discipline: parentGoal.discipline,
-      current_status: "pending",
-      events: [{ id: `ev-stg-${Date.now()}`, status: "pending", occurred_on: today, comment: "STG created under LTG", user_name: "Sam Therapist", created_at: now }],
-      data_points: [],
-      children: [],
-    });
-  }
-
-  return (
-    <div className="ml-6 border-l-2 border-indigo-200 pl-4 mt-2">
-      <div className="border border-indigo-200 rounded-lg bg-white p-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-indigo-600">New Short Term Goal</span>
-          <div className="flex items-center gap-2">
-            {aiState === "idle" && goalText.trim().length > 5 && (
-              <button onClick={handleImprove} className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                Improve with AI
-              </button>
-            )}
-            {aiState === "loading" && (
-              <span className="inline-flex items-center gap-1 text-xs text-violet-500">
-                <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
-                Generating...
-              </span>
-            )}
-            <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        </div>
-        <textarea value={goalText} onChange={(e) => { setGoalText(e.target.value); if (aiState === "suggestion") { setSuggestion(null); setAiState("idle"); } }} rows={2} placeholder="Type rough notes... e.g. 'work on /r/ in initial position' or 'buttoning practice'" className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-
-        {/* AI suggestion */}
-        {aiState === "suggestion" && suggestion && (
-          <div className="border border-violet-200 rounded-lg bg-violet-50/50 px-3 py-2.5 space-y-2">
-            <div className="flex items-center gap-2">
-              <svg className="w-3 h-3 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              <span className="text-xs font-medium text-violet-700">AI Suggestion</span>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-400 line-through">{goalText}</p>
-              <p className="text-xs text-gray-800">{suggestion.goalText}</p>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-xs bg-violet-100 text-violet-700 rounded-full px-2 py-0.5">{suggestion.measurementType}</span>
-              <span className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">Baseline: {suggestion.baselineValue}</span>
-              <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5">Target: {suggestion.targetValue}</span>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={acceptSuggestion} className="px-2.5 py-1 text-xs font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700">Accept</button>
-              <button onClick={() => { setGoalText(suggestion.goalText); setSuggestion(null); setAiState("idle"); }} className="px-2.5 py-1 text-xs font-medium text-violet-600 border border-violet-200 rounded-lg hover:bg-violet-100">Use text only</button>
-              <button onClick={() => { setSuggestion(null); setAiState("idle"); }} className="px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700">Dismiss</button>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Type</label>
-            <select value={measurementType} onChange={(e) => setMeasurementType(e.target.value as MeasurementType)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              {["percentage", "count", "duration", "scale", "binary", "custom"].map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Baseline</label>
-            <input value={baselineValue} onChange={(e) => setBaselineValue(e.target.value)} placeholder="e.g. 30" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Target</label>
-            <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="e.g. 90" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <button onClick={onCancel} className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
-          <button onClick={handleSave} disabled={!goalText.trim()} className="px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed">Add STG</button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// STG editor uses GoalEditorInline with parentGoal prop
 
 // ── Status action (continue / met / discontinue) ──
-function StatusActionRow({ goal, onStatusChange }: { goal: PatientGoal; onStatusChange: (id: string, status: GoalStatus, comment: string) => void }) {
+function StatusActionRow({ goal, onStatusChange }: { goal: PatientGoal; onStatusChange: (id: string, status: GoalStatus, comment: string, currentFunctionalLevel: string | null) => void }) {
   const [action, setAction] = useState<"continued" | "met" | "discontinued" | null>(null);
   const [comment, setComment] = useState("");
+  const [functionalLevel, setFunctionalLevel] = useState("");
 
   if (goal.current_status !== "active") return null;
 
   function handleSubmit() {
     if (!action || !comment.trim()) return;
     const statusMap: Record<string, GoalStatus> = { continued: "active", met: "met", discontinued: "discontinued" };
-    onStatusChange(goal.id, statusMap[action], comment);
+    onStatusChange(goal.id, statusMap[action], comment, functionalLevel || null);
     setAction(null);
     setComment("");
   }
@@ -249,6 +59,15 @@ function StatusActionRow({ goal, onStatusChange }: { goal: PatientGoal; onStatus
         placeholder={cfg.placeholder}
         className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
       />
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Current Functional Level</label>
+        <input
+          value={functionalLevel}
+          onChange={(e) => setFunctionalLevel(e.target.value)}
+          placeholder="Update patient's current functional status..."
+          className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
       <div className="flex justify-end gap-2">
         <button onClick={() => { setAction(null); setComment(""); }} className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
         <button
@@ -274,7 +93,7 @@ function ActiveGoalCard({
 }: {
   goal: PatientGoal;
   childGoals: PatientGoal[];
-  onStatusChange: (id: string, status: GoalStatus, comment: string) => void;
+  onStatusChange: (id: string, status: GoalStatus, comment: string, currentFunctionalLevel: string | null) => void;
   onAddStg: (parentId: string) => void;
   onEdit: (goal: PatientGoal) => void;
   onDelete: (id: string) => void;
@@ -360,6 +179,13 @@ function ActiveGoalCard({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
             <span className="text-xs text-gray-400 italic">{latestEvent.comment}</span>
+          </div>
+        )}
+
+        {/* Current functional level */}
+        {latestEvent?.current_functional_level && (
+          <div className="text-xs text-gray-500 mt-1.5">
+            <span className="font-medium text-gray-600">Current function:</span> {latestEvent.current_functional_level}
           </div>
         )}
 
@@ -460,7 +286,7 @@ export default function CustomFormView() {
     setAddingStgFor(null);
   }
 
-  function handleStatusChange(id: string, status: GoalStatus, comment: string) {
+  function handleStatusChange(id: string, status: GoalStatus, comment: string, currentFunctionalLevel: string | null) {
     setGoals(goals.map((g) => {
       if (g.id !== id) return g;
       const now = new Date().toISOString();
@@ -474,6 +300,7 @@ export default function CustomFormView() {
           status,
           occurred_on: today,
           comment: comment || (status === "met" ? "Goal met" : "Goal continued"),
+          current_functional_level: currentFunctionalLevel,
           user_name: "Sam Therapist",
           created_at: now,
         }],
@@ -527,7 +354,15 @@ export default function CustomFormView() {
                 onDelete={handleDelete}
               />
               {addingStgFor === goal.id && (
-                <StgEditor parentGoal={goal} onSave={handleAddStg} onCancel={() => setAddingStgFor(null)} />
+                <div className="ml-6 border-l-2 border-indigo-200 pl-4 mt-2">
+                  <GoalEditorInline
+                    disciplines={mockPatient.disciplines}
+                    existingGoals={goals}
+                    onSave={handleAddStg}
+                    onCancel={() => setAddingStgFor(null)}
+                    parentGoal={goal}
+                  />
+                </div>
               )}
             </div>
           ))}
@@ -565,6 +400,26 @@ export default function CustomFormView() {
                   <PendingGoalRow key={child.id} goal={child} onDelete={handleDelete} onEdit={setEditingGoal} />
                 )
               ))}
+              {/* Add STG to pending LTG */}
+              {addingStgFor === goal.id ? (
+                <div className="ml-6 border-l-2 border-indigo-200 pl-4 mt-2">
+                  <GoalEditorInline
+                    disciplines={mockPatient.disciplines}
+                    existingGoals={goals}
+                    onSave={handleAddStg}
+                    onCancel={() => setAddingStgFor(null)}
+                    parentGoal={goal}
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAddingStgFor(goal.id)}
+                  className="ml-6 mt-2 inline-flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 font-medium"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Add Short Term Goal
+                </button>
+              )}
             </div>
           ))}
         </div>

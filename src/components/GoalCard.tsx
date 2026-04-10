@@ -223,14 +223,21 @@ function EventTimeline({ goal }: { goal: PatientGoal }) {
   return (
     <div className="mt-3 space-y-2">
       <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status History</h4>
-      <div className="space-y-1">
+      <div className="space-y-2">
         {goal.events.map((event) => (
-          <div key={event.id} className="flex items-start gap-2 text-xs">
-            <StatusBadge status={event.status} />
-            <span className="text-gray-500">{event.occurred_on}</span>
-            <span className="text-gray-400">by {event.user_name}</span>
-            {event.comment && (
-              <span className="text-gray-600 italic">&mdash; {event.comment}</span>
+          <div key={event.id} className="space-y-0.5">
+            <div className="flex items-start gap-2 text-xs">
+              <StatusBadge status={event.status} />
+              <span className="text-gray-500">{event.occurred_on}</span>
+              <span className="text-gray-400">by {event.user_name}</span>
+              {event.comment && (
+                <span className="text-gray-600 italic">&mdash; {event.comment}</span>
+              )}
+            </div>
+            {event.current_functional_level && (
+              <div className="ml-6 text-xs text-gray-400">
+                <span className="font-medium text-gray-500">Function:</span> {event.current_functional_level}
+              </div>
             )}
           </div>
         ))}
@@ -239,8 +246,12 @@ function EventTimeline({ goal }: { goal: PatientGoal }) {
   );
 }
 
-export default function GoalCard({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }) {
-  const [expanded, setExpanded] = useState(goal.current_status === "active" || goal.current_status === "pending");
+export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: PatientGoal; depth?: number; activeFilter?: string }) {
+  const shouldExpand =
+    activeFilter === "met" ? goal.current_status === "met" :
+    activeFilter === "discontinued" ? goal.current_status === "discontinued" :
+    goal.current_status === "active" || goal.current_status === "pending";
+  const [expanded, setExpanded] = useState(shouldExpand);
   const [showHistory, setShowHistory] = useState(false);
   const [showDataPoints, setShowDataPoints] = useState(false);
   const hasChildren = goal.children.length > 0;
@@ -314,29 +325,45 @@ export default function GoalCard({ goal, depth = 0 }: { goal: PatientGoal; depth
             {/* Measurement progress */}
             <MeasurementDisplay goal={goal} />
 
+            {/* Current functional level (from latest event) */}
+            {goal.events.length > 0 && goal.events[goal.events.length - 1].current_functional_level && (
+              <div className="text-xs text-gray-500">
+                <span className="font-medium text-gray-600">Current function:</span> {goal.events[goal.events.length - 1].current_functional_level}
+              </div>
+            )}
+
             {/* Meta info */}
             <div className="flex flex-wrap gap-4 text-xs text-gray-500">
               <span>Start: {goal.start_date}</span>
               {goal.target_date && <span>Target: {goal.target_date}</span>}
               <span className="capitalize">Type: {goal.measurement_type}</span>
-              <span className="capitalize">{goal.goal_type.replace("_", " ")}</span>
             </div>
 
             {/* Toggle buttons + current comment */}
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowHistory(!showHistory); }}
-                  className="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex-shrink-0"
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex-shrink-0 ${
+                    showHistory ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                  }`}
                 >
-                  {showHistory ? "Hide history" : "Show status history"}
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Status history
                 </button>
                 {goal.data_points.length > 0 && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowDataPoints(!showDataPoints); }}
-                    className="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex-shrink-0"
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex-shrink-0 ${
+                      showDataPoints ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                    }`}
                   >
-                    {showDataPoints ? "Hide data points" : `Goal data points (${goal.data_points.length})`}
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Data points ({goal.data_points.length})
                   </button>
                 )}
               </div>
@@ -359,7 +386,7 @@ export default function GoalCard({ goal, depth = 0 }: { goal: PatientGoal; depth
       {expanded && hasChildren && (
         <div className="mt-2 space-y-2">
           {goal.children.map((child) => (
-            <GoalCard key={child.id} goal={child} depth={depth + 1} />
+            <GoalCard key={child.id} goal={child} depth={depth + 1} activeFilter={activeFilter} />
           ))}
         </div>
       )}
