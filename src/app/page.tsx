@@ -5,6 +5,7 @@ import TopNav from "@/components/TopNav";
 import GoalCard from "@/components/GoalCard";
 import GoalsFilter from "@/components/GoalsFilter";
 import CustomFormView from "@/components/CustomFormView";
+import VisitNoteNewView from "@/components/VisitNoteNewView";
 import VisitNoteView from "@/components/VisitNoteView";
 import { mockPatient, mockGoals, GoalStatus, PatientGoal } from "@/data/mockData";
 
@@ -94,7 +95,8 @@ export default function Home() {
 
       {activeTab === "Goal Tab" && <GoalsView />}
       {activeTab === "Custom Form" && <CustomFormView />}
-      {activeTab === "Visit Note" && <VisitNoteView />}
+      {activeTab === "Visit Note - New" && <VisitNoteNewView />}
+      {activeTab === "Visit Note - Show" && <VisitNoteView />}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-const tabs = ["Goal Tab", "Custom Form", "Visit Note"];
+const tabs = ["Goal Tab", "Custom Form", "Visit Note - New", "Visit Note - Show"];
 
 export default function TopNav({
   patientName,
