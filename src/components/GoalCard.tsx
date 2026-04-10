@@ -224,23 +224,27 @@ function EventTimeline({ goal }: { goal: PatientGoal }) {
     <div className="mt-3 space-y-2">
       <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status History</h4>
       <div className="space-y-2">
-        {goal.events.map((event) => (
-          <div key={event.id} className="space-y-0.5">
-            <div className="flex items-start gap-2 text-xs">
-              <StatusBadge status={event.status} />
-              <span className="text-gray-500">{event.occurred_on}</span>
-              <span className="text-gray-400">by {event.user_name}</span>
-              {event.comment && (
-                <span className="text-gray-600 italic">&mdash; {event.comment}</span>
+        {goal.events.map((event, idx) => {
+          const prevLevel = idx > 0 ? goal.events[idx - 1].current_functional_level : null;
+          const showFunction = event.current_functional_level && event.current_functional_level !== prevLevel;
+          return (
+            <div key={event.id} className="space-y-0.5">
+              <div className="flex items-start gap-2 text-xs">
+                <StatusBadge status={event.status} />
+                <span className="text-gray-500">{event.occurred_on}</span>
+                <span className="text-gray-400">by {event.user_name}</span>
+                {event.comment && (
+                  <span className="text-gray-600 italic">&mdash; {event.comment}</span>
+                )}
+              </div>
+              {showFunction && (
+                <div className="ml-6 text-xs text-gray-400">
+                  <span className="font-medium text-gray-500">Function:</span> {event.current_functional_level}
+                </div>
               )}
             </div>
-            {event.current_functional_level && (
-              <div className="ml-6 text-xs text-gray-400">
-                <span className="font-medium text-gray-500">Function:</span> {event.current_functional_level}
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -317,7 +321,7 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
 
             {/* Goal text */}
             <p className={`text-sm leading-relaxed ${
-              goal.current_status === "discontinued" ? "text-gray-400 line-through" : "text-gray-700"
+              goal.current_status === "discontinued" ? "text-gray-400" : "text-gray-700"
             }`}>
               {goal.goal_text}
             </p>

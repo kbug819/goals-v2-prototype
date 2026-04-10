@@ -281,6 +281,12 @@ export default function VisitNoteView() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-6">
+      {/* Page header */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-gray-900">Visit note show page</h2>
+        <p className="text-sm text-gray-400">Update goal progress AFTER visit note save preview</p>
+      </div>
+
       {/* Visit note header bar */}
       <div className="bg-slate-700 text-white rounded-t-lg px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
