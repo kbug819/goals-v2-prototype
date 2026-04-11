@@ -31,6 +31,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Every push to `main` auto-deploys.
 
+[Deployed page](https://goals-v2-prototype.vercel.app/)
+
 ## Mock data
 
 All data lives in `src/data/mockData.ts`. Edit it to test different scenarios (more goals, different statuses, different measurement types).
