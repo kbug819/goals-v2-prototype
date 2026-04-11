@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { mockGoals, PatientGoal } from "@/data/mockData";
-import StatusBadge from "./StatusBadge";
+import StatusBadge from "@/components/shared/StatusBadge";
 
 // ── Format value with unit based on measurement type ──
 function formatValue(value: string, goal: PatientGoal): string {
@@ -242,12 +242,23 @@ function getMockAiAnalysis(goals: PatientGoal[]): AiGoalSuggestion[] {
 }
 
 // ── Main view ──
-export default function VisitNoteView() {
+type ShowFormat = "soap" | "freetext" | "dap" | "freetext_goallist" | "freetext_goalprogress";
+
+const VNCF_SHOW_FORMATS: { value: ShowFormat; label: string }[] = [
+  { value: "soap", label: "SOAP" },
+  { value: "freetext", label: "Free Text" },
+  { value: "dap", label: "DAP" },
+  { value: "freetext_goallist", label: "Free Text w/ Goal List" },
+  { value: "freetext_goalprogress", label: "Free Text w/ Goal Progress" },
+];
+
+export default function VisitNoteView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" }) {
   const [updatingGoal, setUpdatingGoal] = useState<PatientGoal | null>(null);
   const [savedUpdates, setSavedUpdates] = useState<Record<string, { comment: string; dataValue: string; activityName: string }>>({});
   const [aiState, setAiState] = useState<"idle" | "loading" | "done">("idle");
   const [aiSuggestions, setAiSuggestions] = useState<AiGoalSuggestion[]>([]);
   const [showGoalProgress, setShowGoalProgress] = useState(false);
+  const [showFormat, setShowFormat] = useState<ShowFormat>("soap");
 
   // Only show active Speech goals for visit note
   const speechGoals: PatientGoal[] = [];
@@ -283,8 +294,28 @@ export default function VisitNoteView() {
     <div className="max-w-4xl mx-auto px-6 py-6">
       {/* Page header */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Visit note show page</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Visit note show page</h2>
+        </div>
         <p className="text-sm text-gray-400">Update goal progress AFTER visit note save preview</p>
+        {project === "vncf" && (
+          <div className="flex items-center gap-1.5 mt-3">
+            <span className="text-xs text-gray-400 mr-1">Showing:</span>
+            {VNCF_SHOW_FORMATS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setShowFormat(f.value)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  showFormat === f.value
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                    : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Visit note header bar */}
@@ -359,34 +390,191 @@ export default function VisitNoteView() {
           </div>
         </div>
 
-        {/* SOAP Note */}
+        {/* Note content - switches based on format */}
         <div className="px-5 py-4 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900 mb-3">Note</h3>
 
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-semibold text-gray-800 mb-1">Subjective</h4>
-              <p className="text-sm text-gray-600">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Patient appeared well-rested and motivated to participate in activities.</p>
+          {(showFormat === "soap" || project === "goals_v2") && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-1">Subjective</h4>
+                <p className="text-sm text-gray-600">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Patient appeared well-rested and motivated to participate in activities.</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-1">Objective</h4>
+                <p className="text-sm text-gray-600">Articulation drills targeting /r/ in initial, medial, and final positions. Used visual cue cards and auditory bombardment techniques. Worked on structured sentences with /r/ blends. Patient completed 40 trials across word positions.</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-1">Assessment</h4>
+                <p className="text-sm text-gray-600">Patient demonstrated 72% accuracy for /r/ across all positions, up from 68% last session. Initial position is strongest at 85%. Final position remains challenging, particularly with -er endings. Patient benefits from visual modeling and self-monitoring strategies.</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-1">Plan</h4>
+                <p className="text-sm text-gray-600">Continue targeting /r/ in final position with emphasis on -er endings. Introduce self-monitoring checklist. Begin carryover activities for initial /r/ to conversational speech. Next session: 04/15/2026.</p>
+              </div>
             </div>
+          )}
 
-            <div>
-              <h4 className="text-sm font-semibold text-gray-800 mb-1">Objective</h4>
-              <p className="text-sm text-gray-600">Articulation drills targeting /r/ in initial, medial, and final positions. Used visual cue cards and auditory bombardment techniques. Worked on structured sentences with /r/ blends. Patient completed 40 trials across word positions.</p>
+          {showFormat === "dap" && project === "vncf" && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-1">Data</h4>
+                <p className="text-sm text-gray-600">Patient arrived cooperative. Parent reports home practice 3x/week. Articulation drills targeting /r/ in all positions — 40 trials completed. Visual cue cards and auditory bombardment used. 72% accuracy across positions (up from 68%). Initial position strongest at 85%.</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-1">Assessment</h4>
+                <p className="text-sm text-gray-600">Steady improvement in /r/ production. Final position remains challenging, particularly -er endings. Patient benefits from visual modeling and self-monitoring strategies.</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-1">Plan</h4>
+                <p className="text-sm text-gray-600">Continue targeting /r/ in final position with emphasis on -er endings. Introduce self-monitoring checklist. Next session: 04/15/2026.</p>
+              </div>
             </div>
+          )}
 
-            <div>
-              <h4 className="text-sm font-semibold text-gray-800 mb-1">Assessment</h4>
-              <p className="text-sm text-gray-600">Patient demonstrated 72% accuracy for /r/ across all positions, up from 68% last session. Initial position is strongest at 85%. Final position remains challenging, particularly with -er endings. Patient benefits from visual modeling and self-monitoring strategies.</p>
-            </div>
+          {showFormat === "freetext" && project === "vncf" && (
+            <p className="text-sm text-gray-600 leading-relaxed">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Session focused on articulation drills targeting /r/ in initial, medial, and final positions using visual cue cards and auditory bombardment. Patient completed 40 trials and demonstrated 72% accuracy across all positions, up from 68% last session. Initial position is strongest at 85%. Final position remains challenging, particularly with -er endings. Patient benefits from visual modeling and self-monitoring strategies. Will continue targeting /r/ in final position with emphasis on -er endings and introduce self-monitoring checklist. Next session: 04/15/2026.</p>
+          )}
 
-            <div>
-              <h4 className="text-sm font-semibold text-gray-800 mb-1">Plan</h4>
-              <p className="text-sm text-gray-600">Continue targeting /r/ in final position with emphasis on -er endings. Introduce self-monitoring checklist. Begin carryover activities for initial /r/ to conversational speech. Next session: 04/15/2026.</p>
+          {showFormat === "freetext_goalprogress" && project === "vncf" && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 leading-relaxed">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Session focused on articulation drills targeting /r/ in initial, medial, and final positions. Patient demonstrated 72% accuracy across all positions, up from 68%. Will continue targeting final position /r/.</p>
+
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-2">Goal Progress</h4>
+                <div className="space-y-2">
+                  {/* LTG 1.0.0 - saved */}
+                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 1.0.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 45% &rarr; Target: 90%</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Patient will improve articulation of /r/ sound across all word positions with 90% accuracy.</p>
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-600">
+                      <span><span className="font-medium text-gray-500">Activity:</span> Articulation drills</span>
+                      <span><span className="font-medium text-gray-500">Correct trials:</span> 29</span>
+                      <span><span className="font-medium text-gray-500">Total trials:</span> 40 (73%)</span>
+                      <span><span className="font-medium text-gray-500">Prompting level:</span> Min</span>
+                      <span><span className="font-medium text-gray-500">Prompting type:</span> Visual</span>
+                    </div>
+                  </div>
+
+                  {/* STG 1.2.0 - saved */}
+                  <div className="ml-6 border border-amber-200 rounded-lg px-4 py-2.5 bg-amber-50/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">STG 1.2.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 40% &rarr; Target: 90%</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">Produce /r/ in final position with 90% accuracy given minimal verbal cues.</p>
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-600">
+                      <span><span className="font-medium text-gray-500">Activity:</span> Word-level drills</span>
+                      <span><span className="font-medium text-gray-500">Correct trials:</span> 14</span>
+                      <span><span className="font-medium text-gray-500">Total trials:</span> 20 (70%)</span>
+                      <span><span className="font-medium text-gray-500">Prompting level:</span> Mod</span>
+                      <span><span className="font-medium text-gray-500">Prompting type:</span> Modeling</span>
+                    </div>
+                  </div>
+
+                  {/* LTG 2.0.0 - saved */}
+                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 2.0.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 20% &rarr; Target: 80%</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Patient will improve expressive language skills to formulate age-appropriate sentences with minimal assistance.</p>
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-600">
+                      <span><span className="font-medium text-gray-500">Activity:</span> Sentence building</span>
+                      <span><span className="font-medium text-gray-500">Correct trials:</span> 6</span>
+                      <span><span className="font-medium text-gray-500">Total trials:</span> 10 (60%)</span>
+                      <span><span className="font-medium text-gray-500">Prompting level:</span> Mod</span>
+                      <span><span className="font-medium text-gray-500">Prompting type:</span> Verbal</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {showFormat === "freetext_goallist" && project === "vncf" && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 leading-relaxed">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Session focused on articulation drills targeting /r/ in initial, medial, and final positions. Patient demonstrated 72% accuracy across all positions, up from 68%. Will continue targeting final position /r/.</p>
+
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-2">Goals Addressed</h4>
+                <div className="space-y-2">
+                  <div className="border border-gray-200 rounded-lg px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 1.0.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 45% &rarr; Target: 90%</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Patient will improve articulation of /r/ sound across all word positions with 90% accuracy.</p>
+                    <p className="text-xs text-gray-500 italic mt-1">72% accuracy this session — responding well to visual cues for /r/ blends</p>
+                  </div>
+                  <div className="ml-6 border border-gray-100 rounded-lg px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">STG 1.2.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 40% &rarr; Target: 90%</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">Produce /r/ in final position with 90% accuracy given minimal verbal cues.</p>
+                    <p className="text-xs text-gray-500 italic mt-1">Still working on -er endings — adding modeling strategies</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Goal Progress Section */}
+        {/* Additional fields - for all VNCF formats */}
+        {project === "vncf" && (
+          <div className="px-5 py-4 border-b border-gray-200 space-y-3">
+            <div>
+              <div className="text-xs font-semibold text-gray-800 mb-1">Diagnosis Codes</div>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">F80.2 - Mixed receptive-expressive language disorder</span>
+                <span className="text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">R48.8 - Other symbolic dysfunctions</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-gray-800 mb-1">Prognosis</div>
+              <div className="text-sm text-gray-600">Good</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-gray-800 mb-1">Therapy Recommendations</div>
+              <div className="text-sm text-gray-600">Continue current plan of care, Modify treatment approach</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-gray-800 mb-1">Patient/Caregiver Education Provided</div>
+              <div className="text-sm text-gray-600">Home program, Caregiver training</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-gray-800 mb-1">Next Session Date</div>
+              <div className="text-sm text-gray-600">04/15/2026</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-gray-800 mb-1">Additional Notes</div>
+              <div className="text-sm text-gray-600">Parent given updated home practice sheet for /r/ words. Discussed importance of daily practice in natural contexts.</div>
+            </div>
+          </div>
+        )}
+
+        {/* Therapy activities bar - for VNCF formats without goal list/progress */}
+        {project === "vncf" && (showFormat === "soap" || showFormat === "freetext" || showFormat === "dap") && (
+          <div className="px-5 py-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-indigo-700">Therapy activities and trials</h3>
+              <button className="w-7 h-7 flex items-center justify-center text-white bg-indigo-700 rounded text-lg font-bold hover:bg-indigo-800 transition-colors">+</button>
+            </div>
+            <div className="border-t-2 border-indigo-200" />
+          </div>
+        )}
+
+        {/* Goal Progress Section - only for Goals V2 or freetext_goalprogress */}
+        {project === "goals_v2" && (
         <div className="px-5 py-4">
           {!showGoalProgress ? (
             <button
@@ -600,6 +788,7 @@ export default function VisitNoteView() {
           </div>
           )}
         </div>
+        )}
 
         {/* Sign button */}
         <div className="flex justify-end px-5 py-4 border-t border-gray-200">

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import TopNav from "@/components/TopNav";
-import GoalCard from "@/components/GoalCard";
-import GoalsFilter from "@/components/GoalsFilter";
-import CustomFormView from "@/components/CustomFormView";
-import VisitNoteNewView from "@/components/VisitNoteNewView";
-import VisitNoteView from "@/components/VisitNoteView";
+import TopNav from "@/components/shared/TopNav";
+import GoalCard from "@/components/goals-v2/GoalCard";
+import GoalsFilter from "@/components/goals-v2/GoalsFilter";
+import CustomFormView from "@/components/goals-v2/CustomFormView";
+import VisitNoteNewView from "@/components/visit-note/VisitNoteNewView";
+import VisitNoteView from "@/components/visit-note/VisitNoteView";
 import { mockPatient, mockGoals, GoalStatus, PatientGoal } from "@/data/mockData";
 
 function countGoalsByStatus(goals: PatientGoal[]): Record<string, number> {
@@ -87,16 +87,29 @@ function GoalsView() {
 }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("Goal Tab");
+  const [project, setProject] = useState<"vncf" | "goals_v2">("vncf");
+  const [activeTab, setActiveTab] = useState("Visit Note - New");
+
+  function handleProjectChange(newProject: "vncf" | "goals_v2") {
+    setProject(newProject);
+    if (newProject === "vncf") setActiveTab("Visit Note - New");
+    else setActiveTab("Goal Tab");
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TopNav patientName={mockPatient.name} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TopNav
+        patientName={mockPatient.name}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        project={project}
+        onProjectChange={handleProjectChange}
+      />
 
       {activeTab === "Goal Tab" && <GoalsView />}
       {activeTab === "Custom Form" && <CustomFormView />}
-      {activeTab === "Visit Note - New" && <VisitNoteNewView />}
-      {activeTab === "Visit Note - Show" && <VisitNoteView />}
+      {activeTab === "Visit Note - New" && <VisitNoteNewView project={project} />}
+      {activeTab === "Visit Note - Show" && <VisitNoteView project={project} />}
     </div>
   );
 }

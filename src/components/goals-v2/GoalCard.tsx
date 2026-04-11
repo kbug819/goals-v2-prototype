@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { PatientGoal } from "@/data/mockData";
-import StatusBadge from "./StatusBadge";
-import ProgressBar from "./ProgressBar";
-import ScaleProgress from "./ScaleProgress";
+import StatusBadge from "@/components/shared/StatusBadge";
+import ProgressBar from "@/components/shared/ProgressBar";
+import ScaleProgress from "@/components/shared/ScaleProgress";
 
 function VersionLabel({ goal }: { goal: PatientGoal }) {
   const prefix =

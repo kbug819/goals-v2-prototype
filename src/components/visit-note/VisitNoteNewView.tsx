@@ -2,16 +2,19 @@
 
 import { useState } from "react";
 import { mockGoals, PatientGoal } from "@/data/mockData";
-import StatusBadge from "./StatusBadge";
+import { V1_MOCK_GOALS, PROMPTING_LEVELS, PROMPTING_TYPES } from "@/data/v1MockData";
+import StatusBadge from "@/components/shared/StatusBadge";
 
-type NoteFormat = "soap" | "freetext" | "dap" | "freetext_goals" | "freetext_goallist";
+type NoteFormat = "soap" | "freetext" | "dap" | "freetext_v1goallist" | "freetext_v1goalprogress" | "freetext_goals" | "freetext_goallist";
 
 const NOTE_FORMATS: { value: NoteFormat; label: string; shortLabel: string; description: string }[] = [
   { value: "soap", label: "Visit Note - SOAP", shortLabel: "SOAP", description: "Subjective, Objective, Assessment, Plan" },
   { value: "freetext", label: "Visit Note - Free Text", shortLabel: "Free Text", description: "Unstructured clinical narrative" },
   { value: "dap", label: "Visit Note - DAP", shortLabel: "DAP", description: "Data, Assessment, Plan" },
-  { value: "freetext_goals", label: "Visit Note - Free Text & Goal Progress", shortLabel: "Free Text & Goal Progress", description: "Free text narrative with structured goal tracking" },
-  { value: "freetext_goallist", label: "Visit Note - Free Text & Goal List", shortLabel: "Free Text & Goal List", description: "Free text narrative with goal checklist" },
+  { value: "freetext_v1goallist", label: "Free Text w/ Goal List", shortLabel: "Free Text w/ Goal List", description: "Free text narrative with current goal checklist" },
+  { value: "freetext_v1goalprogress", label: "Free Text w/ Goal Progress", shortLabel: "Free Text w/ Goal Progress", description: "Free text narrative with trials and prompting data" },
+  { value: "freetext_goals", label: "Visit Note - Free Text w/ Goal Progress", shortLabel: "Free Text w/ Goal Progress", description: "Free text narrative with structured goal tracking" },
+  { value: "freetext_goallist", label: "Visit Note - Free Text w/ Goal List", shortLabel: "Free Text w/ Goal List", description: "Free text narrative with goal checklist" },
 ];
 
 const DISCIPLINES = ["Speech", "OT", "PT"];
@@ -36,8 +39,317 @@ function formatGoalValue(value: string, goal: PatientGoal): string {
   }
 }
 
+
+function V1StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    active: "bg-green-100 text-green-700",
+    met: "bg-blue-100 text-blue-700",
+    discontinue: "bg-red-100 text-red-700",
+    pending: "bg-amber-100 text-amber-700",
+  };
+  return (
+    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${styles[status] || "bg-gray-100 text-gray-600"}`}>
+      {status}
+    </span>
+  );
+}
+
+function FreeTextV1GoalList() {
+  const activeGoals = V1_MOCK_GOALS.filter((g) => g.status === "active");
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1.5">Clinical Note</label>
+        <textarea rows={6} placeholder="Write your clinical note here..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+      </div>
+
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <label className="text-xs font-medium text-gray-500">Goals Addressed</label>
+          <span className="text-xs text-gray-400 italic">Only checked goals will show on the completed visit note</span>
+        </div>
+        <div className="space-y-2">
+          {activeGoals.map((ltg) => (
+            <div key={ltg.id}>
+              {/* LTG row */}
+              <div className={`border rounded-lg px-4 py-3 ${checked[ltg.id] ? "border-indigo-200 bg-indigo-50/30" : "border-gray-200 bg-white"}`}>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={checked[ltg.id] || false}
+                    onChange={(e) => setChecked({ ...checked, [ltg.id]: e.target.checked })}
+                    className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                        LTG {ltg.version_a}.{ltg.version_b}.{ltg.version_c}
+                      </span>
+                      <V1StatusBadge status={ltg.status} />
+                      <span className="text-xs text-gray-400">Baseline: {ltg.baseline}% &rarr; Target: {ltg.target}%</span>
+                      <span className="text-xs text-gray-300">|</span>
+                      <span className="text-xs text-gray-400">{ltg.activity_count} sessions</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1 leading-relaxed">{ltg.goal}</p>
+                    <div className="text-xs text-gray-400 mt-1">Target date: {ltg.target_date}</div>
+                  </div>
+                </label>
+                {checked[ltg.id] && (
+                  <div className="mt-2 ml-7">
+                    <textarea
+                      value={notes[ltg.id] || ""}
+                      onChange={(e) => setNotes({ ...notes, [ltg.id]: e.target.value })}
+                      rows={2}
+                      placeholder="Notes for this goal..."
+                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* STG children */}
+              {ltg.children.filter((s) => s.status === "active").map((stg) => (
+                <div key={stg.id} className={`ml-6 mt-1.5 border rounded-lg px-4 py-3 ${checked[stg.id] ? "border-indigo-200 bg-indigo-50/30" : "border-gray-100 bg-white"}`}>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked[stg.id] || false}
+                      onChange={(e) => setChecked({ ...checked, [stg.id]: e.target.checked })}
+                      className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">
+                          STG {stg.version_a}.{stg.version_b}.{stg.version_c}
+                        </span>
+                        <V1StatusBadge status={stg.status} />
+                        <span className="text-xs text-gray-400">Baseline: {stg.baseline}% &rarr; Target: {stg.target}%</span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1 leading-relaxed">{stg.goal}</p>
+                    </div>
+                  </label>
+                  {checked[stg.id] && (
+                    <div className="mt-2 ml-7">
+                      <textarea
+                        value={notes[stg.id] || ""}
+                        onChange={(e) => setNotes({ ...notes, [stg.id]: e.target.value })}
+                        rows={2}
+                        placeholder="Notes for this goal..."
+                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+type V1GoalUpdate = { activity: string; correct: string; total: string; promptLevel: string; promptTypes: string[] };
+
+function FreeTextV1GoalProgress() {
+  const activeGoals = V1_MOCK_GOALS.filter((g) => g.status === "active");
+  const [drafts, setDrafts] = useState<Record<string, V1GoalUpdate>>({});
+  const [saved, setSaved] = useState<Record<string, V1GoalUpdate>>({});
+
+  function updateField(goalId: string, field: string, val: string | string[]) {
+    const newVal = field === "promptTypes" && typeof val === "string" ? (val ? [val] : []) : val;
+    setDrafts({ ...drafts, [goalId]: { ...drafts[goalId], [field]: newVal } as V1GoalUpdate });
+  }
+
+  function saveGoal(goalId: string) {
+    if (drafts[goalId]) {
+      setSaved({ ...saved, [goalId]: drafts[goalId] });
+      const next = { ...drafts };
+      delete next[goalId];
+      setDrafts(next);
+    }
+  }
+
+  function editGoal(goalId: string) {
+    if (saved[goalId]) {
+      setDrafts({ ...drafts, [goalId]: saved[goalId] });
+      const next = { ...saved };
+      delete next[goalId];
+      setSaved(next);
+    }
+  }
+
+  function deleteGoal(goalId: string) {
+    const nextSaved = { ...saved };
+    delete nextSaved[goalId];
+    setSaved(nextSaved);
+    const nextDrafts = { ...drafts };
+    delete nextDrafts[goalId];
+    setDrafts(nextDrafts);
+  }
+
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1.5">Clinical Note</label>
+        <textarea rows={6} placeholder="Write your clinical note here..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Goal Progress</h3>
+          <span className="text-xs text-gray-400">{Object.keys(saved).length} of {activeGoals.length + activeGoals.reduce((n, g) => n + g.children.filter((c) => c.status === "active").length, 0)} updated</span>
+        </div>
+
+        <div className="space-y-3">
+          {activeGoals.map((ltg) => (
+            <div key={ltg.id}>
+              {/* LTG */}
+              <GoalProgressCard label={`LTG ${ltg.version_a}.${ltg.version_b}.${ltg.version_c}`} goalText={ltg.goal} baseline={ltg.baseline} target={ltg.target} status={ltg.status} draft={drafts[ltg.id]} savedData={saved[ltg.id]} onUpdateField={(f, v) => updateField(ltg.id, f, v)} onSave={() => saveGoal(ltg.id)} onEdit={() => editGoal(ltg.id)} onDelete={() => deleteGoal(ltg.id)} isChild={false} />
+
+              {/* STG children */}
+              {ltg.children.filter((s) => s.status === "active").map((stg) => (
+                <GoalProgressCard key={stg.id} label={`STG ${stg.version_a}.${stg.version_b}.${stg.version_c}`} goalText={stg.goal} baseline={stg.baseline} target={stg.target} status={stg.status} draft={drafts[stg.id]} savedData={saved[stg.id]} onUpdateField={(f, v) => updateField(stg.id, f, v)} onSave={() => saveGoal(stg.id)} onEdit={() => editGoal(stg.id)} onDelete={() => deleteGoal(stg.id)} isChild={true} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GoalProgressCard({ label, goalText, baseline, target, status, draft, savedData, onUpdateField, onSave, onEdit, onDelete, isChild }: {
+  label: string;
+  goalText: string;
+  baseline: number;
+  target: number;
+  status: string;
+  draft?: V1GoalUpdate;
+  savedData?: V1GoalUpdate;
+  onUpdateField: (field: string, val: string) => void;
+  onSave: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  isChild: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const isSaved = !!savedData;
+  const isEditing = !!draft;
+  const displayData = savedData || draft;
+  const accuracy = displayData?.correct && displayData?.total ? `${((parseInt(displayData.correct) / parseInt(displayData.total)) * 100).toFixed(0)}%` : null;
+
+  return (
+    <div className={`${isChild ? "ml-6 mt-1.5" : ""}`}>
+      <div className={`border rounded-lg px-4 py-3 ${isSaved ? "border-amber-300 bg-amber-50/50" : isEditing ? "border-indigo-200 bg-white" : "border-gray-200 bg-white"}`}>
+        {/* Header */}
+        <div className="flex items-center justify-between cursor-pointer" onClick={() => !isSaved && setExpanded(!expanded)}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className={`text-xs font-mono font-bold ${isChild ? "text-indigo-500" : "text-indigo-600"} bg-indigo-50 px-2 py-0.5 rounded`}>
+              {label}
+            </span>
+            <V1StatusBadge status={status} />
+            <span className="text-xs text-gray-400">Baseline: {baseline}% &rarr; Target: {target}%</span>
+            {isSaved && accuracy && (
+              <>
+                <span className="text-gray-300">|</span>
+                <span className="text-xs font-medium text-amber-700">Accuracy: {accuracy}</span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {isSaved ? (
+              <div className="flex items-center gap-1.5">
+                <button onClick={(e) => { e.stopPropagation(); onEdit(); setExpanded(true); }} className="text-gray-400 hover:text-indigo-500 transition-colors" title="Edit">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            ) : (
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            )}
+          </div>
+        </div>
+
+        <p className="text-sm text-gray-500 mt-1.5 leading-relaxed truncate">{goalText}</p>
+
+        {/* Saved summary */}
+        {isSaved && savedData && (
+          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+            {savedData.activity && <span className="bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">{savedData.activity}</span>}
+            {savedData.correct && savedData.total && <span className="bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">{savedData.correct}/{savedData.total} ({accuracy})</span>}
+            {savedData.promptLevel && <span className="bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">{savedData.promptLevel}</span>}
+            {savedData.promptTypes?.[0] && <span className="bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">{savedData.promptTypes[0]}</span>}
+          </div>
+        )}
+
+        {/* Editing form */}
+        {isEditing && expanded && (
+          <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Therapy Activity</label>
+              <input value={draft?.activity || ""} onChange={(e) => onUpdateField("activity", e.target.value)} placeholder="e.g. Articulation drills, Story retell" className="w-full border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Correct Trials</label>
+                <input type="number" min="0" value={draft?.correct || ""} onChange={(e) => onUpdateField("correct", e.target.value)} placeholder="e.g. 8" className="w-full border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Total Trials</label>
+                <input type="number" min="0" value={draft?.total || ""} onChange={(e) => onUpdateField("total", e.target.value)} placeholder="e.g. 10" className="w-full border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+            {draft?.correct && draft?.total && (
+              <div className="text-xs text-green-600 font-medium">
+                Response Accuracy: {draft.correct}/{draft.total} ({((parseInt(draft.correct) / parseInt(draft.total)) * 100).toFixed(0)}%)
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Prompting Level</label>
+                <select value={draft?.promptLevel || ""} onChange={(e) => onUpdateField("promptLevel", e.target.value)} className="w-full border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="">Select...</option>
+                  {PROMPTING_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Prompting Type</label>
+                <select value={draft?.promptTypes?.[0] || ""} onChange={(e) => onUpdateField("promptTypes", e.target.value)} className="w-full border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="">Select...</option>
+                  {PROMPTING_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={() => { onSave(); setExpanded(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                Update
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Click to start editing */}
+        {!isSaved && !isEditing && !expanded && (
+          <button onClick={() => { onUpdateField("activity", ""); setExpanded(true); }} className="mt-2 text-xs text-indigo-500 hover:text-indigo-700 font-medium">
+            + Add therapy activity
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function FreeTextGoalProgress() {
-  const [showGoals, setShowGoals] = useState(false);
   const [updates, setUpdates] = useState<Record<string, { value: string; activity: string; note: string }>>({});
 
   // Get active Speech goals
@@ -62,34 +374,12 @@ function FreeTextGoalProgress() {
         <textarea rows={6} placeholder="Write your clinical note here..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
       </div>
 
-      {/* Goal Progress - collapsible like Visit Note Show */}
-      {!showGoals ? (
-        <button
-          onClick={() => setShowGoals(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-indigo-600 border-2 border-dashed border-indigo-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          Add Goal Progress
-          {Object.keys(updates).length > 0 && (
-            <span className="text-xs text-indigo-400">({Object.keys(updates).length} of {speechGoals.length} updated)</span>
-          )}
-        </button>
-      ) : (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-gray-700">Goal Progress</h3>
-              <button onClick={() => setShowGoals(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                </svg>
-              </button>
-            </div>
-            <span className="text-xs text-gray-400">{Object.values(updates).filter((u) => u.value).length} of {speechGoals.length} updated</span>
-          </div>
-
+      {/* Goal Progress - always visible */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Goal Progress</h3>
+          <span className="text-xs text-gray-400">{Object.values(updates).filter((u) => u.value).length} of {speechGoals.length} updated</span>
+        </div>
           <div className="space-y-2">
             {speechGoals.map((goal) => {
               const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
@@ -162,8 +452,7 @@ function FreeTextGoalProgress() {
               );
             })}
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -354,6 +643,14 @@ function NoteForm({ format }: { format: NoteFormat }) {
             </div>
           )}
 
+          {format === "freetext_v1goallist" && (
+            <FreeTextV1GoalList />
+          )}
+
+          {format === "freetext_v1goalprogress" && (
+            <FreeTextV1GoalProgress />
+          )}
+
           {format === "freetext_goals" && (
             <FreeTextGoalProgress />
           )}
@@ -361,6 +658,80 @@ function NoteForm({ format }: { format: NoteFormat }) {
           {format === "freetext_goallist" && (
             <FreeTextGoalList />
           )}
+        </div>
+
+        {/* Additional custom form components */}
+        <div className="px-5 py-4 border-t border-gray-200 space-y-4">
+          {/* Diagnosis Codes (smart component) */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="text-xs font-medium text-gray-500">Diagnosis Codes</label>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">
+                F80.2 - Mixed receptive-expressive language disorder
+                <button className="text-gray-400 hover:text-gray-600">&times;</button>
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">
+                R48.8 - Other symbolic dysfunctions
+                <button className="text-gray-400 hover:text-gray-600">&times;</button>
+              </span>
+              <button className="text-xs text-indigo-500 hover:text-indigo-700">+ Add code</button>
+            </div>
+          </div>
+
+          {/* Prognosis (smart component) */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="text-xs font-medium text-gray-500">Prognosis</label>
+            </div>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Select prognosis...</option>
+              <option value="excellent">Excellent</option>
+              <option value="good">Good</option>
+              <option value="fair">Fair</option>
+              <option value="guarded">Guarded</option>
+              <option value="poor">Poor</option>
+            </select>
+          </div>
+
+          {/* Therapy Recommendations (checkboxes) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Therapy Recommendations</label>
+            <div className="space-y-1.5">
+              {["Continue current plan of care", "Modify treatment approach", "Increase frequency", "Decrease frequency", "Discharge from services", "Refer to another discipline"].map((opt) => (
+                <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  <span className="text-sm text-gray-600">{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Patient/Caregiver Education (toggles) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Patient/Caregiver Education Provided</label>
+            <div className="flex flex-wrap gap-2">
+              {["Home program", "Safety precautions", "Equipment use", "Activity modification", "Caregiver training"].map((opt) => (
+                <label key={opt} className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 text-xs text-gray-600">
+                  <input type="checkbox" className="w-3 h-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  {opt}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Next Session (date input) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Next Session Date</label>
+            <input type="date" className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          {/* Additional Notes (text area) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Additional Notes</label>
+            <textarea rows={2} placeholder="Any additional clinical notes..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+          </div>
         </div>
 
         {/* Auto-summary checkbox + Save button */}
@@ -378,8 +749,8 @@ function NoteForm({ format }: { format: NoteFormat }) {
         </div>
       </div>
 
-      {/* Right sidebar */}
-      <div className="w-72 flex-shrink-0 space-y-3">
+      {/* Right sidebar - hide on formats with inline goals */}
+      {format !== "freetext_goals" && format !== "freetext_goallist" && format !== "freetext_v1goallist" && format !== "freetext_v1goalprogress" && <div className="w-72 flex-shrink-0 space-y-3">
         {/* Load a prior note */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <button
@@ -488,37 +859,42 @@ function NoteForm({ format }: { format: NoteFormat }) {
             </div>
           )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
 
-export default function VisitNoteNewView() {
+const VNCF_FORMATS = NOTE_FORMATS.filter((f) => ["soap", "freetext", "dap", "freetext_v1goallist", "freetext_v1goalprogress"].includes(f.value));
+const V2_FORMATS = NOTE_FORMATS.filter((f) => ["soap", "freetext", "dap", "freetext_goals", "freetext_goallist"].includes(f.value));
+
+export default function VisitNoteNewView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" }) {
+  const visibleFormats = project === "vncf" ? VNCF_FORMATS : V2_FORMATS;
   const [selectedFormat, setSelectedFormat] = useState<NoteFormat>("soap");
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       {/* Page header */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Visit Note</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Visit note new page</h2>
+        </div>
         <p className="text-sm text-gray-400">New visit note preview</p>
-      </div>
-
-      {/* Format selector */}
-      <div className="flex items-center justify-center gap-2 mb-4">
-        {NOTE_FORMATS.map((format) => (
-          <button
-            key={format.value}
-            onClick={() => setSelectedFormat(format.value!)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
-              selectedFormat === format.value
-                ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                : "border-gray-200 text-gray-500 hover:bg-gray-50"
-            }`}
-          >
-            {format.shortLabel}
-          </button>
-        ))}
+        <div className="flex items-center gap-1.5 mt-3">
+          <span className="text-xs text-gray-400 mr-1">Showing:</span>
+          {visibleFormats.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setSelectedFormat(f.value!)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                selectedFormat === f.value
+                  ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                  : "border-gray-200 text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              {f.shortLabel}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Title bar */}

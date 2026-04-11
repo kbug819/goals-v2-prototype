@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { PatientGoal, GoalStatus, mockGoals, mockPatient } from "@/data/mockData";
-import GoalEditorInline from "./GoalEditorInline";
-import StatusBadge from "./StatusBadge";
+import GoalEditorInline from "@/components/goals-v2/GoalEditorInline";
+import StatusBadge from "@/components/shared/StatusBadge";
 
 // STG editor uses GoalEditorInline with parentGoal prop
 
