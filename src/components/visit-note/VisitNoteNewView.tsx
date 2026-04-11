@@ -4,17 +4,20 @@ import { useState } from "react";
 import { mockGoals, PatientGoal } from "@/data/mockData";
 import { V1_MOCK_GOALS, PROMPTING_LEVELS, PROMPTING_TYPES } from "@/data/v1MockData";
 import StatusBadge from "@/components/shared/StatusBadge";
+import DevNote from "@/components/shared/DevNote";
 
-type NoteFormat = "soap" | "freetext" | "dap" | "freetext_v1goallist" | "freetext_v1goalprogress" | "freetext_goals" | "freetext_goallist";
+type NoteFormat = "soap" | "freetext" | "dap" | "freetext_v1goallist" | "freetext_v1goalprogress" | "freetext_v1goaladmin" | "freetext_v1goalcustom" | "freetext_goals" | "freetext_goallist";
 
 const NOTE_FORMATS: { value: NoteFormat; label: string; shortLabel: string; description: string }[] = [
   { value: "soap", label: "Visit Note - SOAP", shortLabel: "SOAP", description: "Subjective, Objective, Assessment, Plan" },
   { value: "freetext", label: "Visit Note - Free Text", shortLabel: "Free Text", description: "Unstructured clinical narrative" },
   { value: "dap", label: "Visit Note - DAP", shortLabel: "DAP", description: "Data, Assessment, Plan" },
-  { value: "freetext_v1goallist", label: "Free Text w/ Goal List", shortLabel: "Free Text w/ Goal List", description: "Free text narrative with current goal checklist" },
-  { value: "freetext_v1goalprogress", label: "Free Text w/ Goal Progress", shortLabel: "Free Text w/ Goal Progress", description: "Free text narrative with trials and prompting data" },
-  { value: "freetext_goals", label: "Visit Note - Free Text w/ Goal Progress", shortLabel: "Free Text w/ Goal Progress", description: "Free text narrative with structured goal tracking" },
-  { value: "freetext_goallist", label: "Visit Note - Free Text w/ Goal List", shortLabel: "Free Text w/ Goal List", description: "Free text narrative with goal checklist" },
+  { value: "freetext_v1goallist", label: "w/ Goal List", shortLabel: "w/ Goal List", description: "Free text narrative with current goal checklist" },
+  { value: "freetext_v1goalprogress", label: "w/ Goal Progress", shortLabel: "w/ Goal Progress", description: "Free text narrative with trials and prompting data" },
+  { value: "freetext_v1goaladmin", label: "w/ Goal Admin Components", shortLabel: "w/ Goal Admin Components", description: "Free text with goals and admin-configured components per goal" },
+  { value: "freetext_v1goalcustom", label: "w/ Goal Custom Components", shortLabel: "w/ Goal Custom Components", description: "Free text with goals and customizable components per goal" },
+  { value: "freetext_goals", label: "w/ Goal Progress", shortLabel: "w/ Goal Progress", description: "Free text narrative with structured goal tracking" },
+  { value: "freetext_goallist", label: "w/ Goal List", shortLabel: "w/ Goal List", description: "Free text narrative with goal checklist" },
 ];
 
 const DISCIPLINES = ["Speech", "OT", "PT"];
@@ -68,7 +71,7 @@ function FreeTextV1GoalList() {
 
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <label className="text-xs font-medium text-gray-500">Goals Addressed</label>
+          <label className="text-xs font-medium text-gray-500">Goals Addressed <span className="ml-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">Possible new custom form component</span></label>
           <span className="text-xs text-gray-400 italic">Only checked goals will show on the completed visit note</span>
         </div>
         <div className="space-y-2">
@@ -90,8 +93,6 @@ function FreeTextV1GoalList() {
                       </span>
                       <V1StatusBadge status={ltg.status} />
                       <span className="text-xs text-gray-400">Baseline: {ltg.baseline}% &rarr; Target: {ltg.target}%</span>
-                      <span className="text-xs text-gray-300">|</span>
-                      <span className="text-xs text-gray-400">{ltg.activity_count} sessions</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1 leading-relaxed">{ltg.goal}</p>
                     <div className="text-xs text-gray-400 mt-1">Target date: {ltg.target_date}</div>
@@ -202,7 +203,7 @@ function FreeTextV1GoalProgress() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Goal Progress</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Goal Progress <span className="ml-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">Possible new custom form component</span></h3>
           <span className="text-xs text-gray-400">{Object.keys(saved).length} of {activeGoals.length + activeGoals.reduce((n, g) => n + g.children.filter((c) => c.status === "active").length, 0)} updated</span>
         </div>
 
@@ -238,7 +239,6 @@ function GoalProgressCard({ label, goalText, baseline, target, status, draft, sa
   onDelete: () => void;
   isChild: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const isSaved = !!savedData;
   const isEditing = !!draft;
   const displayData = savedData || draft;
@@ -248,7 +248,7 @@ function GoalProgressCard({ label, goalText, baseline, target, status, draft, sa
     <div className={`${isChild ? "ml-6 mt-1.5" : ""}`}>
       <div className={`border rounded-lg px-4 py-3 ${isSaved ? "border-amber-300 bg-amber-50/50" : isEditing ? "border-indigo-200 bg-white" : "border-gray-200 bg-white"}`}>
         {/* Header */}
-        <div className="flex items-center justify-between cursor-pointer" onClick={() => !isSaved && setExpanded(!expanded)}>
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className={`text-xs font-mono font-bold ${isChild ? "text-indigo-500" : "text-indigo-600"} bg-indigo-50 px-2 py-0.5 rounded`}>
               {label}
@@ -262,22 +262,16 @@ function GoalProgressCard({ label, goalText, baseline, target, status, draft, sa
               </>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {isSaved ? (
-              <div className="flex items-center gap-1.5">
-                <button onClick={(e) => { e.stopPropagation(); onEdit(); setExpanded(true); }} className="text-gray-400 hover:text-indigo-500 transition-colors" title="Edit">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-            ) : (
-              <svg className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            )}
-          </div>
+          {isSaved && (
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => onEdit()} className="text-gray-400 hover:text-indigo-500 transition-colors" title="Edit">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              </button>
+              <button onClick={() => onDelete()} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          )}
         </div>
 
         <p className="text-sm text-gray-500 mt-1.5 leading-relaxed truncate">{goalText}</p>
@@ -293,7 +287,7 @@ function GoalProgressCard({ label, goalText, baseline, target, status, draft, sa
         )}
 
         {/* Editing form */}
-        {isEditing && expanded && (
+        {isEditing && (
           <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
             <div>
               <label className="block text-xs text-gray-400 mb-1">Therapy Activity</label>
@@ -331,7 +325,7 @@ function GoalProgressCard({ label, goalText, baseline, target, status, draft, sa
               </div>
             </div>
             <div className="flex justify-end">
-              <button onClick={() => { onSave(); setExpanded(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+              <button onClick={() => onSave()} className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
                 Update
               </button>
             </div>
@@ -339,11 +333,310 @@ function GoalProgressCard({ label, goalText, baseline, target, status, draft, sa
         )}
 
         {/* Click to start editing */}
-        {!isSaved && !isEditing && !expanded && (
-          <button onClick={() => { onUpdateField("activity", ""); setExpanded(true); }} className="mt-2 text-xs text-indigo-500 hover:text-indigo-700 font-medium">
+        {!isSaved && !isEditing && (
+          <button onClick={() => onUpdateField("activity", "")} className="mt-2 text-xs text-indigo-500 hover:text-indigo-700 font-medium">
             + Add therapy activity
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+const CUSTOM_COMPONENT_OPTIONS = [
+  { value: "text_area", label: "Text Area" },
+  { value: "trials", label: "Trials (Correct / Total)" },
+  { value: "prompting", label: "Prompting Level & Type" },
+  { value: "scale", label: "Scale / Rating" },
+  { value: "checkboxes", label: "Checkboxes" },
+  { value: "select_dropdown", label: "Dropdown Select" },
+];
+
+function FreeTextV1GoalAdmin() {
+  const activeGoals = V1_MOCK_GOALS.filter((g) => g.status === "active");
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1.5">Clinical Note</label>
+        <textarea rows={6} placeholder="Write your clinical note here..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">
+            Goals w/ Admin Selected Components
+            <span className="ml-2 text-xs font-medium text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">Possible new custom form component</span>
+          </h3>
+          <span className="text-xs text-gray-400 italic">Showing active goals and custom radio button.</span>
+        </div>
+
+        <div className="space-y-3">
+          {activeGoals.map((ltg) => (
+            <div key={ltg.id}>
+              <div className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG {ltg.version_a}.{ltg.version_b}.{ltg.version_c}</span>
+                  <V1StatusBadge status={ltg.status} />
+                  <span className="text-xs text-gray-400">Baseline: {ltg.baseline}% &rarr; Target: {ltg.target}%</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">{ltg.goal}</p>
+
+                {/* Admin-configured components - same for every goal */}
+                <div className="mt-3 space-y-2">
+                  <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Progress Status</label>
+                    <div className="flex gap-2">
+                      {["Progressing", "Plateau", "Regression", "Met"].map((opt) => (
+                        <label key={opt} className="inline-flex items-center gap-1.5 cursor-pointer">
+                          <input type="radio" name={`status-${ltg.id}`} className="w-3.5 h-3.5 border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                          <span className="text-xs text-gray-600">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Session Notes</label>
+                    <textarea rows={2} placeholder="Notes for this goal..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* STG children */}
+              {ltg.children.filter((s) => s.status === "active").map((stg) => (
+                <div key={stg.id} className="ml-6 mt-1.5 border border-gray-100 rounded-lg px-4 py-3 bg-white">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">STG {stg.version_a}.{stg.version_b}.{stg.version_c}</span>
+                    <V1StatusBadge status={stg.status} />
+                    <span className="text-xs text-gray-400">Baseline: {stg.baseline}% &rarr; Target: {stg.target}%</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">{stg.goal}</p>
+                  <div className="mt-3 space-y-2">
+                    <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50">
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Progress Status</label>
+                      <div className="flex gap-2">
+                        {["Progressing", "Plateau", "Regression", "Met"].map((opt) => (
+                          <label key={opt} className="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name={`status-${stg.id}`} className="w-3.5 h-3.5 border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                            <span className="text-xs text-gray-600">{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50">
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Session Notes</label>
+                      <textarea rows={2} placeholder="Notes for this goal..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FreeTextV1GoalCustom() {
+  const activeGoals = V1_MOCK_GOALS.filter((g) => g.status === "active");
+  const [goalComponents, setGoalComponents] = useState<Record<string, string[]>>({});
+  const [addingFor, setAddingFor] = useState<string | null>(null);
+
+  function addComponent(goalId: string, componentType: string) {
+    const current = goalComponents[goalId] || [];
+    setGoalComponents({ ...goalComponents, [goalId]: [...current, componentType] });
+    setAddingFor(null);
+  }
+
+  function removeComponent(goalId: string, index: number) {
+    const current = [...(goalComponents[goalId] || [])];
+    current.splice(index, 1);
+    setGoalComponents({ ...goalComponents, [goalId]: current });
+  }
+
+  function renderComponent(type: string, goalId: string, index: number) {
+    return (
+      <div key={`${goalId}-${index}`} className="border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50/50">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-gray-500">{CUSTOM_COMPONENT_OPTIONS.find((c) => c.value === type)?.label}</span>
+          <button onClick={() => removeComponent(goalId, index)} className="text-gray-300 hover:text-red-500 transition-colors" title="Remove component">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        {type === "text_area" && (
+          <textarea rows={2} placeholder="Enter notes..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+        )}
+        {type === "trials" && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs text-gray-400 mb-0.5">Correct</label>
+              <input type="number" min="0" placeholder="e.g. 8" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-0.5">Total</label>
+              <input type="number" min="0" placeholder="e.g. 10" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+        )}
+        {type === "prompting" && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs text-gray-400 mb-0.5">Level</label>
+              <select className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Select...</option>
+                {PROMPTING_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-0.5">Type</label>
+              <select className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Select...</option>
+                {PROMPTING_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+        {type === "scale" && (
+          <div>
+            <label className="block text-xs text-gray-400 mb-0.5">Rating</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button key={n} className="w-8 h-8 text-sm border border-gray-200 rounded hover:bg-indigo-50 hover:border-indigo-300 transition-colors">{n}</button>
+              ))}
+            </div>
+          </div>
+        )}
+        {type === "checkboxes" && (
+          <div className="space-y-1">
+            {["Achieved target", "Needs modification", "Carryover noted", "Parent/caregiver involved"].map((opt) => (
+              <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                <span className="text-xs text-gray-600">{opt}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        {type === "select_dropdown" && (
+          <select className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Select...</option>
+            <option value="progressing">Progressing</option>
+            <option value="plateau">Plateau</option>
+            <option value="regression">Regression</option>
+            <option value="met">Met</option>
+          </select>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1.5">Clinical Note</label>
+        <textarea rows={6} placeholder="Write your clinical note here..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">
+            Goals w/ Custom Components
+            <span className="ml-2 text-xs font-medium text-violet-600 bg-violet-100 rounded-full px-2 py-0.5">Possible future iteration</span>
+          </h3>
+          <span className="text-xs text-gray-400 italic">Add any component type under each goal</span>
+        </div>
+
+        <div className="space-y-3">
+          {activeGoals.map((ltg) => (
+            <div key={ltg.id}>
+              {/* LTG */}
+              <div className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG {ltg.version_a}.{ltg.version_b}.{ltg.version_c}</span>
+                  <V1StatusBadge status={ltg.status} />
+                  <span className="text-xs text-gray-400">Baseline: {ltg.baseline}% &rarr; Target: {ltg.target}%</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">{ltg.goal}</p>
+
+                {/* Added components */}
+                {(goalComponents[ltg.id] || []).length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {(goalComponents[ltg.id] || []).map((comp, i) => renderComponent(comp, ltg.id, i))}
+                  </div>
+                )}
+
+                {/* Add component button */}
+                <div className="mt-2">
+                  {addingFor === ltg.id ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {CUSTOM_COMPONENT_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => addComponent(ltg.id, opt.value)}
+                          className="px-2.5 py-1 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
+                        >
+                          + {opt.label}
+                        </button>
+                      ))}
+                      <button onClick={() => setAddingFor(null)} className="px-2.5 py-1 text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setAddingFor(ltg.id)}
+                      className="inline-flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 font-medium"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      Add component
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* STG children */}
+              {ltg.children.filter((s) => s.status === "active").map((stg) => (
+                <div key={stg.id} className="ml-6 mt-1.5 border border-gray-100 rounded-lg px-4 py-3 bg-white">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">STG {stg.version_a}.{stg.version_b}.{stg.version_c}</span>
+                    <V1StatusBadge status={stg.status} />
+                    <span className="text-xs text-gray-400">Baseline: {stg.baseline}% &rarr; Target: {stg.target}%</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">{stg.goal}</p>
+
+                  {(goalComponents[stg.id] || []).length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {(goalComponents[stg.id] || []).map((comp, i) => renderComponent(comp, stg.id, i))}
+                    </div>
+                  )}
+
+                  <div className="mt-2">
+                    {addingFor === stg.id ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {CUSTOM_COMPONENT_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => addComponent(stg.id, opt.value)}
+                            className="px-2.5 py-1 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
+                          >
+                            + {opt.label}
+                          </button>
+                        ))}
+                        <button onClick={() => setAddingFor(null)} className="px-2.5 py-1 text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setAddingFor(stg.id)}
+                        className="inline-flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 font-medium"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        Add component
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -377,7 +670,7 @@ function FreeTextGoalProgress() {
       {/* Goal Progress - always visible */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Goal Progress</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Goal Progress <span className="ml-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">Possible new custom form component</span></h3>
           <span className="text-xs text-gray-400">{Object.values(updates).filter((u) => u.value).length} of {speechGoals.length} updated</span>
         </div>
           <div className="space-y-2">
@@ -481,7 +774,7 @@ function FreeTextGoalList() {
 
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <label className="text-xs font-medium text-gray-500">Goals Addressed</label>
+          <label className="text-xs font-medium text-gray-500">Goals Addressed <span className="ml-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">Possible new custom form component</span></label>
           <span className="text-xs text-gray-400 italic">Only checked goals will show on the completed visit note</span>
         </div>
         <div className="space-y-2">
@@ -651,6 +944,13 @@ function NoteForm({ format }: { format: NoteFormat }) {
             <FreeTextV1GoalProgress />
           )}
 
+          {format === "freetext_v1goaladmin" && (
+            <FreeTextV1GoalAdmin />
+          )}
+
+          {format === "freetext_v1goalcustom" && (
+            <FreeTextV1GoalCustom />
+          )}
           {format === "freetext_goals" && (
             <FreeTextGoalProgress />
           )}
@@ -660,7 +960,8 @@ function NoteForm({ format }: { format: NoteFormat }) {
           )}
         </div>
 
-        {/* Additional custom form components */}
+        {/* Additional custom form components - hide on goal-specific formats */}
+        {format !== "freetext_v1goallist" && format !== "freetext_v1goalprogress" && format !== "freetext_v1goaladmin" && format !== "freetext_v1goalcustom" && format !== "freetext_goals" && format !== "freetext_goallist" && (
         <div className="px-5 py-4 border-t border-gray-200 space-y-4">
           {/* Diagnosis Codes (smart component) */}
           <div>
@@ -733,6 +1034,7 @@ function NoteForm({ format }: { format: NoteFormat }) {
             <textarea rows={2} placeholder="Any additional clinical notes..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
           </div>
         </div>
+        )}
 
         {/* Auto-summary checkbox + Save button */}
         <div className="flex items-center justify-between px-5 py-4 border-t border-gray-200">
@@ -750,7 +1052,7 @@ function NoteForm({ format }: { format: NoteFormat }) {
       </div>
 
       {/* Right sidebar - hide on formats with inline goals */}
-      {format !== "freetext_goals" && format !== "freetext_goallist" && format !== "freetext_v1goallist" && format !== "freetext_v1goalprogress" && <div className="w-72 flex-shrink-0 space-y-3">
+      {format !== "freetext_goals" && format !== "freetext_goallist" && format !== "freetext_v1goallist" && format !== "freetext_v1goalprogress" && format !== "freetext_v1goaladmin" && format !== "freetext_v1goalcustom" && <div className="w-72 flex-shrink-0 space-y-3">
         {/* Load a prior note */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <button
@@ -864,37 +1166,40 @@ function NoteForm({ format }: { format: NoteFormat }) {
   );
 }
 
-const VNCF_FORMATS = NOTE_FORMATS.filter((f) => ["soap", "freetext", "dap", "freetext_v1goallist", "freetext_v1goalprogress"].includes(f.value));
+const VNCF_FORMATS = NOTE_FORMATS.filter((f) => ["soap", "freetext", "dap", "freetext_v1goallist", "freetext_v1goalprogress", "freetext_v1goaladmin", "freetext_v1goalcustom"].includes(f.value));
 const V2_FORMATS = NOTE_FORMATS.filter((f) => ["soap", "freetext", "dap", "freetext_goals", "freetext_goallist"].includes(f.value));
 
-export default function VisitNoteNewView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" }) {
+export default function VisitNoteNewView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" | "progress_reports" }) {
   const visibleFormats = project === "vncf" ? VNCF_FORMATS : V2_FORMATS;
   const [selectedFormat, setSelectedFormat] = useState<NoteFormat>("soap");
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
-      {/* Page header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Visit note new page</h2>
-        </div>
-        <p className="text-sm text-gray-400">New visit note preview</p>
-        <div className="flex items-center gap-1.5 mt-3">
-          <span className="text-xs text-gray-400 mr-1">Showing:</span>
-          {visibleFormats.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setSelectedFormat(f.value!)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                selectedFormat === f.value
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                  : "border-gray-200 text-gray-500 hover:bg-gray-50"
-              }`}
-            >
-              {f.shortLabel}
-            </button>
-          ))}
-        </div>
+      <DevNote
+        description='This page previews the new visit note creation flow. Use the "Showing" buttons to switch between possible visit note custom forms. "w/ Goal Admin Components" uses components pre-configured by org admins in the Custom Form Editor (per user request). "w/  Goals Custom Components" allows therapists to dynamically add components per goal at fill time (possible future iteration, but would be cool.'
+        todos={["Will we still have the 'Load a prior note' and 'Current plan of care (POC) buttons? Added below but can remove if needed.",
+          "Anything else that I need to add to the default form here?",
+          "Any other new custom component ideas for goals or other new components that we need to outline here?",
+          "Will there still be a generate ai summary check box at the bottom of the form?"
+        ]}
+      />
+
+      {/* Format selector */}
+      <div className="flex items-center gap-1.5 mb-6">
+        <span className="text-xs text-gray-400 mr-1">Showing:</span>
+        {visibleFormats.map((f) => (
+          <button
+            key={f.value}
+            onClick={() => setSelectedFormat(f.value!)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+              selectedFormat === f.value
+                ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                : "border-gray-200 text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            {f.shortLabel}
+          </button>
+        ))}
       </div>
 
       {/* Title bar */}

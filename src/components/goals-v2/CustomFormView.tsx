@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PatientGoal, GoalStatus, mockGoals, mockPatient } from "@/data/mockData";
 import GoalEditorInline from "@/components/goals-v2/GoalEditorInline";
+import DevNote from "@/components/shared/DevNote";
 import StatusBadge from "@/components/shared/StatusBadge";
 
 // STG editor uses GoalEditorInline with parentGoal prop
@@ -320,12 +321,11 @@ export default function CustomFormView() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Goals Editor</h2>
-        <p className="text-sm text-gray-400">smart-goals-editor-v2 component preview</p>
-      </div>
+    <div className="max-w-5xl mx-auto px-6 py-6">
+      <DevNote
+        description="This page previews the smart-goals-editor-v2 custom form component. Active goals are locked and can be continued, met, or discontinued. New LTGs and STGs can be added with AI-assisted goal text generation."
+        todos={[]}
+      />
 
       {/* Document context banner */}
       <div className="flex items-center gap-2 text-sm bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6 text-blue-700">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { mockGoals, PatientGoal } from "@/data/mockData";
 import StatusBadge from "@/components/shared/StatusBadge";
+import DevNote from "@/components/shared/DevNote";
 
 // ── Format value with unit based on measurement type ──
 function formatValue(value: string, goal: PatientGoal): string {
@@ -242,17 +243,19 @@ function getMockAiAnalysis(goals: PatientGoal[]): AiGoalSuggestion[] {
 }
 
 // ── Main view ──
-type ShowFormat = "soap" | "freetext" | "dap" | "freetext_goallist" | "freetext_goalprogress";
+type ShowFormat = "soap" | "freetext" | "dap" | "freetext_goallist" | "freetext_goalprogress" | "freetext_goaladmin" | "freetext_goalcustom";
 
 const VNCF_SHOW_FORMATS: { value: ShowFormat; label: string }[] = [
   { value: "soap", label: "SOAP" },
   { value: "freetext", label: "Free Text" },
   { value: "dap", label: "DAP" },
-  { value: "freetext_goallist", label: "Free Text w/ Goal List" },
-  { value: "freetext_goalprogress", label: "Free Text w/ Goal Progress" },
+  { value: "freetext_goallist", label: "w/ Goal List" },
+  { value: "freetext_goalprogress", label: "w/ Goal Progress" },
+  { value: "freetext_goaladmin", label: "w/ Goal Admin Components" },
+  { value: "freetext_goalcustom", label: "w/ Goal Custom Components" },
 ];
 
-export default function VisitNoteView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" }) {
+export default function VisitNoteView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" | "progress_reports" }) {
   const [updatingGoal, setUpdatingGoal] = useState<PatientGoal | null>(null);
   const [savedUpdates, setSavedUpdates] = useState<Record<string, { comment: string; dataValue: string; activityName: string }>>({});
   const [aiState, setAiState] = useState<"idle" | "loading" | "done">("idle");
@@ -291,13 +294,14 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-6">
-      {/* Page header */}
+    <div className="max-w-5xl mx-auto px-6 py-6">
+      <DevNote
+        description="This page previews the visit note show/display view after saving. Therapy activity add button will only show if the base visit note does not already include a goal-specific component."
+        todos={[]}
+      />
+
+      {/* Format selector */}
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Visit note show page</h2>
-        </div>
-        <p className="text-sm text-gray-400">Update goal progress AFTER visit note save preview</p>
         {project === "vncf" && (
           <div className="flex items-center gap-1.5 mt-3">
             <span className="text-xs text-gray-400 mr-1">Showing:</span>
@@ -527,10 +531,124 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
               </div>
             </div>
           )}
+
+          {showFormat === "freetext_goaladmin" && project === "vncf" && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 leading-relaxed">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Session focused on articulation drills targeting /r/ in all positions. Patient demonstrated 72% accuracy across all positions, up from 68%.</p>
+
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-2">Goals w/ Admin Selected Components</h4>
+                <div className="space-y-2">
+                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 1.0.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 45% &rarr; Target: 90%</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Patient will improve articulation of /r/ sound across all word positions with 90% accuracy.</p>
+                    <div className="mt-2 space-y-1.5 text-xs text-gray-600">
+                      <div><span className="font-medium text-gray-500">Progress status:</span> Progressing</div>
+                      <div><span className="font-medium text-gray-500">Session notes:</span> Responding well to visual cues for /r/ blends, increasing accuracy in initial and medial positions</div>
+                    </div>
+                  </div>
+                  <div className="ml-6 border border-amber-200 rounded-lg px-4 py-2.5 bg-amber-50/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">STG 1.2.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 40% &rarr; Target: 90%</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">Produce /r/ in final position with 90% accuracy given minimal verbal cues.</p>
+                    <div className="mt-2 space-y-1.5 text-xs text-gray-600">
+                      <div><span className="font-medium text-gray-500">Progress status:</span> Plateau</div>
+                      <div><span className="font-medium text-gray-500">Session notes:</span> Still struggling with -er endings, adding visual modeling strategies next session</div>
+                    </div>
+                  </div>
+                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 2.0.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 20% &rarr; Target: 80%</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Patient will improve expressive language skills to formulate age-appropriate sentences.</p>
+                    <div className="mt-2 space-y-1.5 text-xs text-gray-600">
+                      <div><span className="font-medium text-gray-500">Progress status:</span> Progressing</div>
+                      <div><span className="font-medium text-gray-500">Session notes:</span> Beginning to use sentence starters independently, moderate assist level</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showFormat === "freetext_goalcustom" && project === "vncf" && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 leading-relaxed">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Session focused on articulation drills targeting /r/ in all positions. Patient demonstrated 72% accuracy across all positions, up from 68%.</p>
+
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                  Goals w/ Custom Components
+                  <span className="ml-2 text-xs font-medium text-violet-600 bg-violet-100 rounded-full px-2 py-0.5">Possible future iteration</span>
+                </h4>
+                <div className="space-y-2">
+                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 1.0.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 45% &rarr; Target: 90%</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Patient will improve articulation of /r/ sound across all word positions with 90% accuracy.</p>
+                    <div className="mt-2 space-y-1.5">
+                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600">
+                        <span className="font-medium text-gray-500">Trials:</span> 29/40 (73%)
+                      </div>
+                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600">
+                        <span className="font-medium text-gray-500">Notes:</span> Responding well to visual cues, increasing accuracy in initial and medial positions
+                      </div>
+                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600">
+                        <span className="font-medium text-gray-500">Rating:</span> 4 / 5
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ml-6 border border-amber-200 rounded-lg px-4 py-2.5 bg-amber-50/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">STG 1.2.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 40% &rarr; Target: 90%</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">Produce /r/ in final position with 90% accuracy given minimal verbal cues.</p>
+                    <div className="mt-2 space-y-1.5">
+                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600">
+                        <span className="font-medium text-gray-500">Prompting:</span> Mod level, Modeling type
+                      </div>
+                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600">
+                        <span className="font-medium text-gray-500">Checklist:</span> Needs modification, Carryover noted
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 2.0.0</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
+                      <span className="text-xs text-gray-400">Baseline: 20% &rarr; Target: 80%</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Patient will improve expressive language skills to formulate age-appropriate sentences.</p>
+                    <div className="mt-2 space-y-1.5">
+                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600">
+                        <span className="font-medium text-gray-500">Status:</span> Progressing
+                      </div>
+                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600">
+                        <span className="font-medium text-gray-500">Notes:</span> Beginning to use sentence starters independently
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Additional fields - for all VNCF formats */}
-        {project === "vncf" && (
+        {/* Additional fields - only for SOAP/Free Text/DAP */}
+        {project === "vncf" && (showFormat === "soap" || showFormat === "freetext" || showFormat === "dap") && (
           <div className="px-5 py-4 border-b border-gray-200 space-y-3">
             <div>
               <div className="text-xs font-semibold text-gray-800 mb-1">Diagnosis Codes</div>
