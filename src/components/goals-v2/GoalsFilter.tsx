@@ -21,7 +21,7 @@ const filters: { value: GoalStatus | "all"; label: string }[] = [
 
 export default function GoalsFilter({ activeFilter, onFilterChange, counts, disciplines, activeDiscipline, onDisciplineChange }: GoalsFilterProps) {
   return (
-    <div className="flex flex-col items-end gap-2">
+    <div className="flex flex-col items-start gap-2">
       {/* Discipline filter */}
       {disciplines.length > 1 && (
         <div className="flex items-center gap-2">

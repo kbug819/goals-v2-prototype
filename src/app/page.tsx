@@ -9,6 +9,8 @@ import CustomFormCreationView from "@/components/visit-note/CustomFormCreationVi
 import VisitNoteNewView from "@/components/visit-note/VisitNoteNewView";
 import VisitNoteView from "@/components/visit-note/VisitNoteView";
 import DevNote from "@/components/shared/DevNote";
+import ProgressReportNewView from "@/components/progress-report/ProgressReportNewView";
+import ProgressReportShowView from "@/components/progress-report/ProgressReportShowView";
 import { mockPatient, mockGoals, GoalStatus, PatientGoal } from "@/data/mockData";
 
 function countGoalsByStatus(goals: PatientGoal[]): Record<string, number> {
@@ -111,45 +113,11 @@ export default function Home() {
 
       {activeTab === "Custom Form Creation" && <CustomFormCreationView />}
       {activeTab === "Goal Tab" && <GoalsView />}
-      {activeTab === "Custom Form" && <CustomFormView />}
+      {activeTab === "POC / Eval - New" && <CustomFormView />}
       {activeTab === "Visit Note - New" && <VisitNoteNewView project={project} />}
       {activeTab === "Visit Note - Show" && <VisitNoteView project={project} />}
-      {activeTab === "Progress Report - New" && (
-        <div className="max-w-5xl mx-auto px-6 py-6">
-          <DevNote
-            description="This page will preview the progress report creation flow powered by Goals V2 data — goal data points, measurement trends, and progress narratives."
-            todos={[]}
-          />
-          <div className="bg-white border border-gray-200 rounded-lg px-6 py-12 text-center text-gray-400">
-            <p className="text-lg">Coming soon</p>
-            <p className="text-sm mt-1">Progress report creation with Goals V2 data</p>
-          </div>
-          <div className="mt-8 text-center">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-xs text-gray-500">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Goals V2 Prototype &mdash; Progress Reports Preview
-            </span>
-          </div>
-        </div>
-      )}
-      {activeTab === "Progress Report - Show" && (
-        <div className="max-w-5xl mx-auto px-6 py-6">
-          <DevNote
-            description="This page will preview the progress report display view — showing goal progress summaries, data point charts, and therapist narratives per goal."
-            todos={[]}
-          />
-          <div className="bg-white border border-gray-200 rounded-lg px-6 py-12 text-center text-gray-400">
-            <p className="text-lg">Coming soon</p>
-            <p className="text-sm mt-1">Progress report display with Goals V2 data</p>
-          </div>
-          <div className="mt-8 text-center">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-xs text-gray-500">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Goals V2 Prototype &mdash; Progress Reports Preview
-            </span>
-          </div>
-        </div>
-      )}
+      {activeTab === "Progress Report - New" && <ProgressReportNewView />}
+      {activeTab === "Progress Report - Show" && <ProgressReportShowView />}
     </div>
   );
 }

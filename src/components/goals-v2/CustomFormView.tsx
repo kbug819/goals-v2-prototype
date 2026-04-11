@@ -323,7 +323,7 @@ export default function CustomFormView() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
-        description="This page previews the smart-goals-editor-v2 custom form component. Active goals are locked and can be continued, met, or discontinued. New LTGs and STGs can be added with AI-assisted goal text generation."
+        description="This page previews the smart-goals-editor-v2 custom form component for Plans of Care and Evaluations. This is the Goal CRUD component where therapists create, update, continue, meet, or discontinue goals. Active goals are locked after signing. New LTGs and STGs can be added with AI-assisted goal text generation."
         todos={[]}
       />
 
