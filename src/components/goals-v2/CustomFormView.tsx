@@ -123,35 +123,8 @@ function ActiveGoalCard({
   onDelete: (id: string) => void;
   onRevert?: (id: string) => void;
 }) {
-  const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
   const latestEvent = goal.events[goal.events.length - 1];
-  const latestDataPoint = goal.data_points[goal.data_points.length - 1];
   const isTopLevel = goal.goal_type !== "short_term";
-
-  // Build synopsis
-  let synopsis = "";
-  if (goal.measurement_type === "percentage" && goal.baseline_value && goal.target_value) {
-    const current = latestDataPoint ? latestDataPoint.value : goal.baseline_value;
-    synopsis = `${current}% of ${goal.target_value}% target`;
-  } else if (goal.measurement_type === "scale") {
-    const current = latestDataPoint ? latestDataPoint.value : goal.baseline_value;
-    synopsis = `${(current || "").replace(/_/g, " ")} → ${(goal.target_value || "").replace(/_/g, " ")}`;
-  } else if (goal.measurement_type === "count" && goal.baseline_value && goal.target_value) {
-    const current = latestDataPoint ? latestDataPoint.value : goal.baseline_value;
-    const unit = (goal.measurement_config.unit as string) || "";
-    synopsis = `${current}/${goal.target_value} ${unit}`;
-  } else if (goal.measurement_type === "duration" && goal.baseline_value && goal.target_value) {
-    const current = latestDataPoint ? latestDataPoint.value : goal.baseline_value;
-    const unit = (goal.measurement_config.unit as string) || "seconds";
-    synopsis = `${current}s of ${goal.target_value} ${unit} target`;
-  } else if (goal.measurement_type === "binary") {
-    const current = latestDataPoint ? latestDataPoint.value : "false";
-    synopsis = current === "true" ? "Achieved" : "Not yet achieved";
-  } else if (goal.measurement_type === "custom" && goal.baseline_value && goal.target_value) {
-    const current = latestDataPoint ? latestDataPoint.value : goal.baseline_value;
-    const unit = (goal.measurement_config.unit as string) || "";
-    synopsis = `${current} of ${goal.target_value} ${unit}`;
-  }
 
   const isClosedOnForm = goal.current_status === "met" || goal.current_status === "discontinued";
   const isChild = goal.goal_type === "short_term";
