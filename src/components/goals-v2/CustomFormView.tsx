@@ -10,7 +10,7 @@ import { formatDate } from "@/utils/formatDate";
 // STG editor uses GoalEditorInline with parentGoal prop
 
 // ── Status action (continue / met / discontinue) ──
-function StatusActionRow({ goal, onStatusChange }: { goal: PatientGoal; onStatusChange: (id: string, status: GoalStatus, comment: string, currentFunctionalLevel: string | null) => void }) {
+function StatusActionRow({ goal, activeChildCount = 0, onStatusChange }: { goal: PatientGoal; activeChildCount?: number; onStatusChange: (id: string, status: GoalStatus, comment: string, currentFunctionalLevel: string | null) => void }) {
   const [action, setAction] = useState<"continued" | "met" | "discontinued" | null>(null);
   const [comment, setComment] = useState("");
   const [functionalLevel, setFunctionalLevel] = useState("");
@@ -30,6 +30,8 @@ function StatusActionRow({ goal, onStatusChange }: { goal: PatientGoal; onStatus
     met: { label: "Marking as Met", placeholder: "How was this goal met? (e.g. achieved 92% across 3 sessions)", btnLabel: "Confirm Met", btnClass: "bg-green-600 hover:bg-green-700", color: "text-green-600", borderColor: "border-green-200" },
     discontinued: { label: "Discontinuing Goal", placeholder: "Reason for discontinuing (e.g. reassessing approach, patient not responding to current strategy)", btnLabel: "Confirm Discontinue", btnClass: "bg-red-600 hover:bg-red-700", color: "text-red-600", borderColor: "border-red-200" },
   };
+
+  const showChildWarning = activeChildCount > 0 && (action === "met" || action === "discontinued");
 
   if (!action) {
     return (
@@ -54,6 +56,25 @@ function StatusActionRow({ goal, onStatusChange }: { goal: PatientGoal; onStatus
       <div className="flex items-center gap-2">
         <span className={`text-xs font-medium ${cfg.color}`}>{cfg.label}</span>
       </div>
+
+      {showChildWarning && (
+        <div className={`flex items-start gap-2 text-xs rounded-lg px-3 py-2 ${
+          action === "met"
+            ? "bg-green-50 border border-green-200 text-green-700"
+            : "bg-red-50 border border-red-200 text-red-700"
+        }`}>
+          <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <span>
+            {action === "met"
+              ? `This will also mark ${activeChildCount} active short-term goal${activeChildCount > 1 ? "s" : ""} as met.`
+              : `This will also discontinue ${activeChildCount} active short-term goal${activeChildCount > 1 ? "s" : ""}.`
+            }
+          </span>
+        </div>
+      )}
+
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
@@ -92,6 +113,7 @@ function ActiveGoalCard({
   onAddStg,
   onEdit,
   onDelete,
+  onRevert,
 }: {
   goal: PatientGoal;
   childGoals: PatientGoal[];
@@ -99,6 +121,7 @@ function ActiveGoalCard({
   onAddStg: (parentId: string) => void;
   onEdit: (goal: PatientGoal) => void;
   onDelete: (id: string) => void;
+  onRevert?: (id: string) => void;
 }) {
   const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
   const latestEvent = goal.events[goal.events.length - 1];
@@ -130,6 +153,53 @@ function ActiveGoalCard({
     synopsis = `${current} of ${goal.target_value} ${unit}`;
   }
 
+  const isClosedOnForm = goal.current_status === "met" || goal.current_status === "discontinued";
+
+  // ── Met / Discontinued on this form: compact in-place card with revert ──
+  if (isClosedOnForm) {
+    return (
+      <div className={`${goal.goal_type === "short_term" ? "ml-6 border-l-2 border-gray-200 pl-4" : ""}`}>
+        <div className={`border rounded-lg px-4 py-3 ${
+          goal.current_status === "met" ? "border-blue-200 bg-blue-50/40" : "border-red-200 bg-red-50/40"
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                {prefix} {goal.version_a}.{goal.version_b}.{goal.version_c}
+              </span>
+              <StatusBadge status={goal.current_status} />
+              {latestEvent?.comment ? (
+                <span className="text-xs text-gray-400 italic truncate max-w-xs">{latestEvent.comment}</span>
+              ) : null}
+            </div>
+            {onRevert && (
+              <button
+                onClick={() => onRevert(goal.id)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors flex-shrink-0"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+                Revert
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">{goal.goal_text}</p>
+        </div>
+
+        {/* Child STGs also show their closed state */}
+        {childGoals.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {childGoals.map((child) => (
+              <ActiveGoalCard key={child.id} goal={child} childGoals={[]} onStatusChange={onStatusChange} onAddStg={onAddStg} onEdit={onEdit} onDelete={onDelete} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Active goal: full card ──
   return (
     <div className={`${goal.goal_type === "short_term" ? "ml-6 border-l-2 border-gray-200 pl-4" : ""}`}>
       <div className="border border-gray-200 rounded-lg bg-white px-4 py-3">
@@ -178,7 +248,6 @@ function ActiveGoalCard({
         {goal.current_status === "active" && goal.baseline_value && goal.target_value && goal.data_points.length > 0 && (() => {
           const dp = goal.data_points;
           const currentDp = dp[dp.length - 1];
-          // "Previous" = value from ~halfway through data points (simulates prior POC period)
           const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
           const previousDp = dp.length > 2 ? dp[prevIdx] : null;
           const fmt = (v: string) => {
@@ -232,10 +301,10 @@ function ActiveGoalCard({
         ) : null}
 
         {/* Status actions */}
-        <StatusActionRow goal={goal} onStatusChange={onStatusChange} />
+        <StatusActionRow goal={goal} activeChildCount={childGoals.filter((c) => c.current_status === "active").length} onStatusChange={onStatusChange} />
 
         {/* Add STG button for top-level goals */}
-        {isTopLevel && (
+        {isTopLevel && goal.current_status === "active" && (
           <button
             onClick={() => onAddStg(goal.id)}
             className="mt-2 inline-flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 font-medium"
@@ -304,13 +373,16 @@ export default function CustomFormView() {
   const [addingStgFor, setAddingStgFor] = useState<string | null>(null);
   const [editingGoal, setEditingGoal] = useState<PatientGoal | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  // Track goals whose status was changed on this form (not pre-existing met/discontinued)
+  const [changedOnForm, setChangedOnForm] = useState<Set<string>>(new Set());
 
-  const speechGoals = goals.filter((g) => g.discipline === "Speech" && g.current_status !== "met" && g.current_status !== "discontinued");
-  const activeTopLevel = speechGoals.filter((g) => g.current_status === "active" && g.goal_type !== "short_term");
+  const speechGoals = goals.filter((g) => g.discipline === "Speech");
+  // Show active goals + goals changed to met/disc on this form (in place)
+  const visibleTopLevel = speechGoals.filter((g) => g.goal_type !== "short_term" && (g.current_status === "active" || changedOnForm.has(g.id)));
   const pendingTopLevel = speechGoals.filter((g) => g.current_status === "pending" && g.goal_type !== "short_term");
 
   function getChildren(parentId: string) {
-    return speechGoals.filter((g) => g.parent_id === parentId);
+    return speechGoals.filter((g) => g.parent_id === parentId && (g.current_status === "active" || g.current_status === "pending" || changedOnForm.has(g.id)));
   }
 
   function handleAddLtg(goal: PatientGoal) {
@@ -329,20 +401,67 @@ export default function CustomFormView() {
   }
 
   function handleStatusChange(id: string, status: GoalStatus, comment: string, currentFunctionalLevel: string | null) {
+    const now = new Date().toISOString();
+    const today = now.slice(0, 10);
+    // If met or discontinued on a parent goal, cascade to active children
+    const cascadeIds = new Set<string>([id]);
+    if (status === "met" || status === "discontinued") {
+      goals.forEach((g) => {
+        if (g.parent_id === id && g.current_status === "active") {
+          cascadeIds.add(g.id);
+        }
+      });
+      setChangedOnForm((prev) => { const next = new Set(prev); cascadeIds.forEach((cid) => next.add(cid)); return next; });
+    }
     setGoals(goals.map((g) => {
-      if (g.id !== id) return g;
-      const now = new Date().toISOString();
-      const today = now.slice(0, 10);
+      if (!cascadeIds.has(g.id)) return g;
+      const isParent = g.id === id;
       return {
         ...g,
         current_status: status,
         met_on: status === "met" ? today : g.met_on,
         events: [...g.events, {
-          id: `ev-action-${Date.now()}`,
+          id: `ev-action-${Date.now()}-${g.id}`,
           status,
           occurred_on: today,
-          comment: comment || (status === "met" ? "Goal met" : "Goal continued"),
-          current_functional_level: currentFunctionalLevel,
+          comment: isParent
+            ? (comment || (status === "met" ? "Goal met" : "Goal continued"))
+            : `${status === "met" ? "Met" : "Discontinued"} with parent LTG`,
+          current_functional_level: isParent ? currentFunctionalLevel : null,
+          user_name: "Sam Therapist",
+          created_at: now,
+        }],
+      };
+    }));
+  }
+
+  function handleRevertStatus(id: string) {
+    // Revert goal and any children that were cascaded
+    const revertIds = new Set<string>([id]);
+    goals.forEach((g) => {
+      if (g.parent_id === id && (g.current_status === "met" || g.current_status === "discontinued")) {
+        revertIds.add(g.id);
+      }
+    });
+    const now = new Date().toISOString();
+    const today = now.slice(0, 10);
+    setChangedOnForm((prev) => {
+      const next = new Set(prev);
+      revertIds.forEach((rid) => next.delete(rid));
+      return next;
+    });
+    setGoals(goals.map((g) => {
+      if (!revertIds.has(g.id)) return g;
+      return {
+        ...g,
+        current_status: "active" as GoalStatus,
+        met_on: null,
+        events: [...g.events, {
+          id: `ev-revert-${Date.now()}-${g.id}`,
+          status: "active" as GoalStatus,
+          occurred_on: today,
+          comment: "Reverted to active (unsigned draft)",
+          current_functional_level: null,
           user_name: "Sam Therapist",
           created_at: now,
         }],
@@ -380,11 +499,11 @@ export default function CustomFormView() {
         </span>
       </div>
 
-      {/* Active goals (locked) */}
-      {activeTopLevel.length > 0 && (
+      {/* Current goals (active + changed-on-form met/disc stay in place) */}
+      {visibleTopLevel.length > 0 && (
         <div className="space-y-3 mb-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Current Goals</h3>
-          {activeTopLevel.map((goal) => (
+          {visibleTopLevel.map((goal) => (
             <div key={goal.id}>
               <ActiveGoalCard
                 goal={goal}
@@ -393,6 +512,7 @@ export default function CustomFormView() {
                 onAddStg={(parentId) => setAddingStgFor(parentId)}
                 onEdit={setEditingGoal}
                 onDelete={handleDelete}
+                onRevert={handleRevertStatus}
               />
               {addingStgFor === goal.id && (
                 <div className="ml-6 border-l-2 border-indigo-200 pl-4 mt-2">
