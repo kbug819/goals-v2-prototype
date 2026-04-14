@@ -661,7 +661,20 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">Target Date</label>
-            <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <div className="flex items-center gap-2">
+              <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <button
+                type="button"
+                onClick={() => {
+                  const d = targetDate ? new Date(targetDate + "T00:00:00") : new Date();
+                  d.setDate(d.getDate() + 7);
+                  setTargetDate(d.toISOString().slice(0, 10));
+                }}
+                className="px-3 py-1.5 text-xs font-semibold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap"
+              >
+                +1 Week
+              </button>
+            </div>
           </div>
         </div>
       </div>
