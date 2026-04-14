@@ -4,6 +4,7 @@ import { useState } from "react";
 import DevNote from "@/components/shared/DevNote";
 import ProgressReportDefaultView from "./ProgressReportDefaultView";
 import { mockGoals, mockPatient, PatientGoal } from "@/data/mockData";
+import { formatDate, formatDateShort } from "@/utils/formatDate";
 
 function formatValue(value: string, goal: PatientGoal): string {
   const display = value.replace(/_/g, " ");
@@ -42,7 +43,7 @@ function ProgressChart({ goal }: { goal: PatientGoal }) {
   const toX = (i: number) => padX + (i / (values.length - 1)) * (chartW - padX - padRight);
   const toY = (v: number) => padY + (1 - (v - minVal) / range) * (chartH - padY * 2);
 
-  const dotPositions = values.map((v, i) => ({ x: toX(i), y: toY(v), value: v, label: points[i].recorded_at.slice(5) }));
+  const dotPositions = values.map((v, i) => ({ x: toX(i), y: toY(v), value: v, label: formatDateShort(points[i].recorded_at) }));
   const polyline = dotPositions.map((d) => `${d.x},${d.y}`).join(" ");
   const targetY = goal.target_value ? toY(parseFloat(goal.target_value)) : null;
   const baselineY = goal.baseline_value ? toY(parseFloat(goal.baseline_value)) : null;
@@ -122,7 +123,7 @@ function GoalProgressSection({ goal, depth = 0 }: { goal: PatientGoal; depth?: n
             }`}>
               {goal.current_status}
             </span>
-            {goal.met_on ? <span className="text-xs text-gray-400">Met {goal.met_on}</span> : null}
+            {goal.met_on ? <span className="text-xs text-gray-400">Met {formatDate(goal.met_on)}</span> : null}
             <span className="text-xs text-gray-400 capitalize">{goal.measurement_type}</span>
           </div>
           <p className="text-sm text-gray-700 mt-1.5 leading-relaxed">{goal.goal_text}</p>
@@ -180,7 +181,7 @@ function GoalProgressSection({ goal, depth = 0 }: { goal: PatientGoal; depth?: n
               <div className="space-y-0.5">
                 {goal.data_points.map((dp, i) => (
                   <div key={i} className="flex items-center gap-4 text-xs">
-                    <span className="text-gray-400 w-24 flex-shrink-0">{dp.recorded_at}</span>
+                    <span className="text-gray-400 w-24 flex-shrink-0">{formatDate(dp.recorded_at)}</span>
                     <span className="font-medium text-gray-700 w-28 flex-shrink-0">{dp.value.replace(/_/g, " ")}</span>
                     {dp.activity_name ? <span className="text-gray-400">{dp.activity_name}</span> : null}
                     {dp.note ? <span className="text-gray-400 italic">{dp.note}</span> : null}

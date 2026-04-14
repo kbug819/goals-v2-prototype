@@ -5,6 +5,7 @@ import { PatientGoal } from "@/data/mockData";
 import StatusBadge from "@/components/shared/StatusBadge";
 import ProgressBar from "@/components/shared/ProgressBar";
 import ScaleProgress from "@/components/shared/ScaleProgress";
+import { formatDate, formatDateShort } from "@/utils/formatDate";
 
 function VersionLabel({ goal }: { goal: PatientGoal }) {
   const prefix =
@@ -161,7 +162,7 @@ function DataPointsPanel({ goal }: { goal: PatientGoal }) {
       x: toX(i),
       y: toY(v),
       value: v,
-      label: points[i].recorded_at.slice(5), // MM-DD
+      label: formatDateShort(points[i].recorded_at),
     }));
     polyline = dotPositions.map((d) => `${d.x},${d.y}`).join(" ");
 
@@ -209,7 +210,7 @@ function DataPointsPanel({ goal }: { goal: PatientGoal }) {
       <div className="space-y-1">
         {points.map((dp, i) => (
           <div key={i} className="flex items-start gap-3 text-xs">
-            <span className="text-gray-400 w-20 flex-shrink-0">{dp.recorded_at}</span>
+            <span className="text-gray-400 w-20 flex-shrink-0">{formatDate(dp.recorded_at)}</span>
             <span className="font-medium text-gray-700 w-20 flex-shrink-0">{dp.value.replace(/_/g, " ")}</span>
             {dp.note && <span className="text-gray-500 italic">{dp.note}</span>}
           </div>
@@ -231,7 +232,7 @@ function EventTimeline({ goal }: { goal: PatientGoal }) {
             <div key={event.id} className="space-y-0.5">
               <div className="flex items-start gap-2 text-xs">
                 <StatusBadge status={event.status} />
-                <span className="text-gray-500">{event.occurred_on}</span>
+                <span className="text-gray-500">{formatDate(event.occurred_on)}</span>
                 <span className="text-gray-400">by {event.user_name}</span>
                 {event.comment && (
                   <span className="text-gray-600 italic">&mdash; {event.comment}</span>
@@ -284,7 +285,7 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
             </button>
             <VersionLabel goal={goal} />
             <StatusBadge status={goal.current_status} />
-            {goal.met_on && <span className="text-xs text-gray-400">Met {goal.met_on}</span>}
+            {goal.met_on && <span className="text-xs text-gray-400">Met {formatDate(goal.met_on)}</span>}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {hasChildren && (
@@ -338,8 +339,8 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
 
             {/* Meta info */}
             <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-              <span>Start: {goal.start_date}</span>
-              {goal.target_date && <span>Target: {goal.target_date}</span>}
+              <span>Start: {formatDate(goal.start_date)}</span>
+              {goal.target_date && <span>Target: {formatDate(goal.target_date)}</span>}
               <span className="capitalize">Type: {goal.measurement_type}</span>
             </div>
 

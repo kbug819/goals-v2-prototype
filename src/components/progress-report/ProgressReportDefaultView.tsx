@@ -1,6 +1,7 @@
 "use client";
 
 import { mockGoals, mockPatient, PatientGoal } from "@/data/mockData";
+import { formatDate } from "@/utils/formatDate";
 
 function GoalNarrative({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }) {
   const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
@@ -29,7 +30,7 @@ function GoalNarrative({ goal, depth = 0 }: { goal: PatientGoal; depth?: number 
           }`}>
             {goal.current_status}
           </span>
-          {goal.met_on ? <span className="text-xs text-gray-400">Met {goal.met_on}</span> : null}
+          {goal.met_on ? <span className="text-xs text-gray-400">Met {formatDate(goal.met_on)}</span> : null}
           {goal.baseline_value && goal.target_value ? (
             <span className="text-xs text-gray-400">
               Baseline: {goal.baseline_value.replace(/_/g, " ")}{goal.measurement_type === "percentage" ? "%" : ""} → Target: {goal.target_value.replace(/_/g, " ")}{goal.measurement_type === "percentage" ? "%" : ""}

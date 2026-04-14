@@ -4,6 +4,7 @@ import { useState } from "react";
 import { mockGoals, PatientGoal } from "@/data/mockData";
 import StatusBadge from "@/components/shared/StatusBadge";
 import DevNote from "@/components/shared/DevNote";
+import { formatDate } from "@/utils/formatDate";
 
 // ── Format value with unit based on measurement type ──
 function formatValue(value: string, goal: PatientGoal): string {
@@ -73,7 +74,7 @@ function GoalUpdateModal({ goal, onSave, onClose, initialComment, initialDataVal
               <div className="flex items-center gap-2">
                 <span>Last recorded:</span>
                 <span className="font-medium text-gray-700">{formatValue(latestDataPoint.value, goal)}</span>
-                <span>on {latestDataPoint.recorded_at}</span>
+                <span>on {formatDate(latestDataPoint.recorded_at)}</span>
               </div>
               {goal.baseline_value && goal.target_value && (
                 <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import DevNote from "@/components/shared/DevNote";
 import { mockGoals, PatientGoal } from "@/data/mockData";
+import { formatDate } from "@/utils/formatDate";
 
 // ── Default new view — simple narrative per goal ──
 function DefaultNewView() {
@@ -227,7 +228,7 @@ function GoalChartNew({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }
           {/* Chart placeholder */}
           {goal.data_points.length >= 2 ? (
             <div className="bg-gray-50 rounded-lg px-4 py-6 text-center text-xs text-gray-400 border border-dashed border-gray-200">
-              📊 Auto-generated chart from {goal.data_points.length} data points ({goal.data_points[0].recorded_at} — {goal.data_points[goal.data_points.length - 1].recorded_at})
+              📊 Auto-generated chart from {goal.data_points.length} data points ({formatDate(goal.data_points[0].recorded_at)} — {formatDate(goal.data_points[goal.data_points.length - 1].recorded_at)})
             </div>
           ) : null}
 

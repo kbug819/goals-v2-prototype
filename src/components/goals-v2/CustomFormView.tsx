@@ -5,6 +5,7 @@ import { PatientGoal, GoalStatus, mockGoals, mockPatient } from "@/data/mockData
 import GoalEditorInline from "@/components/goals-v2/GoalEditorInline";
 import DevNote from "@/components/shared/DevNote";
 import StatusBadge from "@/components/shared/StatusBadge";
+import { formatDate } from "@/utils/formatDate";
 
 // STG editor uses GoalEditorInline with parentGoal prop
 
@@ -173,22 +174,62 @@ function ActiveGoalCard({
         {/* Goal text */}
         <p className="text-sm text-gray-600 mt-2 leading-relaxed">{goal.goal_text}</p>
 
+        {/* Measurement trajectory table (for continued/active goals with data) */}
+        {goal.current_status === "active" && goal.baseline_value && goal.target_value && goal.data_points.length > 0 && (() => {
+          const dp = goal.data_points;
+          const currentDp = dp[dp.length - 1];
+          // "Previous" = value from ~halfway through data points (simulates prior POC period)
+          const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
+          const previousDp = dp.length > 2 ? dp[prevIdx] : null;
+          const fmt = (v: string) => {
+            const d = v.replace(/_/g, " ");
+            if (goal.measurement_type === "percentage") return `${d}%`;
+            if (goal.measurement_type === "duration") return `${d} ${(goal.measurement_config.unit as string) || "sec"}`;
+            if (goal.measurement_type === "count") return `${d} ${(goal.measurement_config.unit as string) || ""}`;
+            return d;
+          };
+
+          return (
+            <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-3 py-2 text-left font-semibold text-gray-500">Baseline — {formatDate(goal.start_date)}</th>
+                    {previousDp ? <th className="px-3 py-2 text-left font-semibold text-gray-500">Previous — {formatDate(previousDp.recorded_at)}</th> : null}
+                    <th className="px-3 py-2 text-left font-semibold text-gray-500">Target — {goal.target_date ? formatDate(goal.target_date) : "—"}</th>
+                    <th className="px-3 py-2 text-left font-semibold text-indigo-600">Current — {formatDate(currentDp.recorded_at)}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="px-3 py-2 font-medium text-gray-700">{fmt(goal.baseline_value!)}</td>
+                    {previousDp ? <td className="px-3 py-2 font-medium text-gray-700">{fmt(previousDp.value)}</td> : null}
+                    <td className="px-3 py-2 font-medium text-gray-700">{fmt(goal.target_value!)}</td>
+                    <td className="px-3 py-2 font-semibold text-indigo-600">{fmt(currentDp.value)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
+
+        {/* Current functional level */}
+        {latestEvent?.current_functional_level ? (
+          <div className="mt-2">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Current Functional Level</label>
+            <div className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">{latestEvent.current_functional_level}</div>
+          </div>
+        ) : null}
+
         {/* Last comment */}
-        {latestEvent?.comment && (
+        {latestEvent?.comment ? (
           <div className="flex items-center gap-1.5 mt-2">
             <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
             <span className="text-xs text-gray-400 italic">{latestEvent.comment}</span>
           </div>
-        )}
-
-        {/* Current functional level */}
-        {latestEvent?.current_functional_level && (
-          <div className="text-xs text-gray-500 mt-1.5">
-            <span className="font-medium text-gray-600">Current function:</span> {latestEvent.current_functional_level}
-          </div>
-        )}
+        ) : null}
 
         {/* Status actions */}
         <StatusActionRow goal={goal} onStatusChange={onStatusChange} />

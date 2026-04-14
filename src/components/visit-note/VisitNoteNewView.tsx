@@ -5,6 +5,7 @@ import { mockGoals, PatientGoal } from "@/data/mockData";
 import { V1_MOCK_GOALS, PROMPTING_LEVELS, PROMPTING_TYPES } from "@/data/v1MockData";
 import StatusBadge from "@/components/shared/StatusBadge";
 import DevNote from "@/components/shared/DevNote";
+import { formatDate } from "@/utils/formatDate";
 
 type NoteFormat = "soap" | "freetext" | "dap" | "freetext_v1goallist" | "freetext_v1goalprogress" | "freetext_v1goaladmin" | "freetext_v1goalcustom" | "freetext_goals" | "freetext_goallist" | "freetext_v2goaladmin" | "freetext_v2goalcustom";
 
@@ -97,7 +98,7 @@ function FreeTextV1GoalList() {
                       <span className="text-xs text-gray-400">Baseline: {ltg.baseline}% &rarr; Target: {ltg.target}%</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1 leading-relaxed">{ltg.goal}</p>
-                    <div className="text-xs text-gray-400 mt-1">Target date: {ltg.target_date}</div>
+                    <div className="text-xs text-gray-400 mt-1">Target date: {formatDate(ltg.target_date)}</div>
                   </div>
                 </label>
                 {checked[ltg.id] && (
