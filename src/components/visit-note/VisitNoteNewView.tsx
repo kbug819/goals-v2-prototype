@@ -1385,11 +1385,7 @@ export default function VisitNoteNewView({ project = "goals_v2" }: { project?: "
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
         description='This page previews the new visit note creation flow. Use the "Showing" buttons to switch between possible visit note custom forms. "w/ Goal Admin Components" uses components pre-configured by org admins in the Custom Form Editor (per user request). "w/  Goals Custom Components" allows therapists to dynamically add components per goal at fill time (possible future iteration, but would be cool.'
-        todos={["Will we still have the 'Load a prior note' and 'Current plan of care (POC) buttons? Added below but can remove if needed.",
-          "Anything else that I need to add to the default form here?",
-          "Any other new custom component ideas for goals or other new components that we need to outline here?",
-          "Will there still be a generate ai summary check box at the bottom of the form?"
-        ]}
+        todos={[]}
       />
 
       {/* Format selector */}

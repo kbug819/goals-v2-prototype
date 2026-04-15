@@ -254,10 +254,7 @@ export default function ComponentSetupView() {
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
         description="This page previews what the Custom Form Editor looks like when setting up visit note goal components. Click a component to see its configuration options. All of these use the existing custom form editor pattern (Label, Label hint, Options checkboxes) — no framework changes needed."
-        todos={[
-          "Confirm which fields Goal Admin Components should support (trials, prompting, rating, etc.)",
-          "Goal Custom Components marked as future iteration — evaluate after Admin Components ships",
-        ]}
+        todos={[]}
       />
 
       {/* Editor header */}
