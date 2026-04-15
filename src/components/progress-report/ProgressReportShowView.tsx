@@ -333,8 +333,8 @@ function ProgressReportChartsView() {
 }
 
 const SHOW_FORMATS = [
-  { value: "default", label: "Default" },
-  { value: "charts", label: "w/ Progress Charts" },
+  { value: "default", label: "Simple" },
+  { value: "charts", label: "Full" },
 ];
 
 export default function ProgressReportShowView() {
@@ -343,7 +343,7 @@ export default function ProgressReportShowView() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
-        description="This page previews progress report show views. 'Default' is a simple narrative-per-goal layout. 'Progress Charts' includes data visualization, session tables, and measurement-type-aware progress displays."
+        description="This page previews progress report show views. 'Simple' shows narrative-per-goal layout (all data visualization options off). 'Full' shows everything turned on — measurement trajectory, charts, session data tables, and measurement-type-aware progress displays."
         todos={[]}
       />
 

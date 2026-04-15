@@ -248,8 +248,8 @@ function GoalChartNew({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }
 
 // ── Switcher formats ──
 const NEW_FORMATS = [
-  { value: "default", label: "Default" },
-  { value: "charts", label: "w/ Progress Charts" },
+  { value: "default", label: "Simple" },
+  { value: "charts", label: "Full" },
 ];
 
 export default function ProgressReportNewView() {
@@ -258,7 +258,7 @@ export default function ProgressReportNewView() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
-        description="This page previews progress report creation. 'Default' is a simple form with narrative text fields per goal. 'Progress Charts' includes auto-generated summaries and chart placeholders from goal_data_points."
+        description="This page previews progress report creation. 'Simple' shows narrative text fields per goal (all data visualization options off). 'Full' shows everything turned on — measurement trajectory, progress charts, session data, status updates, and narratives."
         todos={[]}
       />
 
