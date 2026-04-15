@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import DevNote from "@/components/shared/DevNote";
 import ProgressReportDefaultView from "./ProgressReportDefaultView";
 import { mockGoals, mockPatient, PatientGoal } from "@/data/mockData";
@@ -526,7 +526,8 @@ function ProgressReportComparativeView() {
                       )}
 
                       {/* Comparative chart */}
-                      {prev && currentVal && (goal.measurement_type === "percentage" || goal.measurement_type === "custom" || goal.measurement_type === "count" || goal.measurement_type === "duration") && (() => {
+                      {(() => {
+                        if (!prev || !currentVal || !["percentage", "custom", "count", "duration"].includes(goal.measurement_type)) return null;
                         // Build mock data points for both periods
                         const baseVal = parseFloat(goal.baseline_value || "0");
                         const prevVal = parseFloat(prev.value);
@@ -611,6 +612,65 @@ function ProgressReportComparativeView() {
                           </div>
                         );
                       })()}
+
+                      {/* Scale comparison (for scale measurement types) */}
+                      {(() => {
+                        if (!prev || !currentVal || goal.measurement_type !== "scale" || !goal.measurement_config.levels) return null;
+                        const levels = goal.measurement_config.levels as string[];
+                        const prevIdx = levels.indexOf(prev.value);
+                        const curIdx = levels.indexOf(currentVal);
+                        return (
+                          <div className="bg-white rounded-lg p-3 border border-gray-200">
+                            <div className="flex items-center gap-4 mb-2">
+                              <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full border-2 border-gray-400 bg-gray-100" /><span className="text-[10px] text-gray-400">Previous</span></div>
+                              <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full border-2 border-indigo-500 bg-indigo-100" /><span className="text-[10px] text-indigo-500">Current</span></div>
+                            </div>
+                            <div className="flex gap-1">
+                              {levels.map((level, i) => {
+                                const isPrev = i === prevIdx;
+                                const isCur = i === curIdx;
+                                const isBetween = i > prevIdx && i <= curIdx;
+                                return (
+                                  <div key={level} className="flex-1 text-center">
+                                    <div className={`h-3 rounded ${
+                                      isCur ? "bg-indigo-600" :
+                                      isPrev ? "bg-gray-400" :
+                                      isBetween ? "bg-indigo-200" :
+                                      "bg-gray-200"
+                                    }`} />
+                                    <div className={`text-[9px] mt-1 leading-tight ${
+                                      isCur ? "font-bold text-indigo-700" :
+                                      isPrev ? "font-bold text-gray-600" :
+                                      "text-gray-400"
+                                    }`}>
+                                      {level.replace(/_/g, " ")}
+                                    </div>
+                                    {isPrev && <div className="text-[8px] text-gray-400 mt-0.5">prev</div>}
+                                    {isCur && <div className="text-[8px] text-indigo-500 mt-0.5">current</div>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Data points table */}
+                      {goal.data_points.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded px-2.5 py-2">
+                          <span className="text-[11px] font-semibold text-gray-500 block mb-1">Session Data ({goal.data_points.length} sessions in current period)</span>
+                          <div className="space-y-0.5">
+                            {goal.data_points.map((dp, i) => (
+                              <div key={i} className="flex items-center gap-3 text-xs">
+                                <span className="text-gray-400 w-20 flex-shrink-0">{formatDate(dp.recorded_at)}</span>
+                                <span className="font-medium text-gray-700 w-24 flex-shrink-0">{formatValue(dp.value, goal)}</span>
+                                {dp.activity_name && <span className="text-gray-400">{dp.activity_name}</span>}
+                                {dp.note && <span className="text-gray-400 italic">{dp.note}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Narrative */}
                       <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
