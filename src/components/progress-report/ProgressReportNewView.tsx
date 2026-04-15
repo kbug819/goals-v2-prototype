@@ -7,8 +7,9 @@ import { mockGoals, PatientGoal, GoalStatus } from "@/data/mockData";
 import { formatDate } from "@/utils/formatDate";
 
 // ── Shared report form (Simple + Full use same layout, showChart toggles) ──
-function ReportFormView({ showChart, goals, changedOnForm, onStatusChange, onRevert }: {
+function ReportFormView({ showChart, mode = "date_range", goals, changedOnForm, onStatusChange, onRevert }: {
   showChart: boolean;
+  mode?: "date_range" | "last_visits" | "comparative";
   goals: PatientGoal[];
   changedOnForm: Set<string>;
   onStatusChange: (id: string, status: GoalStatus, comment: string, currentFunctionalLevel: string | null) => void;
@@ -24,18 +25,73 @@ function ReportFormView({ showChart, goals, changedOnForm, onStatusChange, onRev
   return (
     <div>
       <div className="bg-white border border-gray-200 rounded-lg">
-        {/* Report details */}
+        {/* Report details — changes based on collection mode */}
         <div className="px-5 py-4 border-b border-gray-200 space-y-3">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Reporting Period Start</label>
-              <input type="date" defaultValue="2026-03-01" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          {mode === "date_range" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Reporting Period Start</label>
+                <input type="date" defaultValue="2026-03-01" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Reporting Period End</label>
+                <input type="date" defaultValue="2026-04-08" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Reporting Period End</label>
-              <input type="date" defaultValue="2026-04-08" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          )}
+
+          {mode === "last_visits" && (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Number of Visits</label>
+                <input type="number" defaultValue={10} min={1} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Computed Start</label>
+                <div className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500 bg-gray-50">3/5/2026</div>
+                <span className="text-[11px] text-gray-400">Auto-calculated from oldest visit</span>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Computed End</label>
+                <div className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500 bg-gray-50">4/2/2026</div>
+                <span className="text-[11px] text-gray-400">Auto-calculated from newest visit</span>
+              </div>
             </div>
-          </div>
+          )}
+
+          {mode === "comparative" && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <span className="text-xs font-semibold text-gray-600 block mb-2">Previous Period</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] text-gray-400 mb-1">Start</label>
+                      <input type="date" defaultValue="2025-12-01" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-400 mb-1">End</label>
+                      <input type="date" defaultValue="2026-02-28" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                  <span className="text-xs font-semibold text-indigo-700 block mb-2">Current Period</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] text-gray-400 mb-1">Start</label>
+                      <input type="date" defaultValue="2026-03-01" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-400 mb-1">End</label>
+                      <input type="date" defaultValue="2026-04-08" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">Discipline</label>
@@ -303,6 +359,8 @@ function PRGoalCard({ goal, childGoals, showChart = false, onStatusChange, onRev
 const NEW_FORMATS = [
   { value: "default", label: "Simple" },
   { value: "charts", label: "Full" },
+  { value: "last_visits", label: "Last N Visits" },
+  { value: "comparative", label: "Comparative" },
 ];
 
 export default function ProgressReportNewView() {
@@ -379,7 +437,7 @@ export default function ProgressReportNewView() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
-        description="This page previews progress report creation. 'Simple' shows the POC/Eval-style goal card with trajectory, functional level, comment, and status actions. 'Full' adds charts on top. Status changes cascade to STGs with revert support — same behavior as POC/Eval."
+        description="This page previews progress report creation. 'Simple' shows the POC/Eval-style goal card. 'Full' adds charts. 'Last N Visits' shows the visit-count collection mode. 'Comparative' shows two date ranges for side-by-side comparison. All views share the same goal component with interactive status actions and cascade."
         todos={[]}
       />
 
@@ -402,7 +460,8 @@ export default function ProgressReportNewView() {
       </div>
 
       <ReportFormView
-        showChart={format === "charts"}
+        showChart={format === "charts" || format === "last_visits" || format === "comparative"}
+        mode={format === "last_visits" ? "last_visits" : format === "comparative" ? "comparative" : "date_range"}
         goals={goals}
         changedOnForm={changedOnForm}
         onStatusChange={handleStatusChange}
