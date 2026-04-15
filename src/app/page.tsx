@@ -117,7 +117,9 @@ export default function Home() {
       {activeTab === "Goal Tab" && <GoalsView />}
       {activeTab === "POC / Eval - New" && <CustomFormView />}
       {activeTab === "Visit Note - New" && <VisitNoteNewView project={project} />}
+      {activeTab === "Visit Note - New (WIP)" && <VisitNoteNewView project={project} />}
       {activeTab === "Visit Note - Show" && <VisitNoteView project={project} />}
+      {activeTab === "Visit Note - Show (WIP)" && <VisitNoteView project={project} />}
       {activeTab === "Custom Form Setup" && project === "goals_v2" && <ComponentSetupView />}
       {activeTab === "Custom Form Setup" && project === "progress_reports" && <PRComponentSetupView />}
       {activeTab === "Progress Report - New" && <ProgressReportNewView />}

@@ -4,7 +4,7 @@ type Project = "vncf" | "goals_v2" | "progress_reports";
 
 const PROJECT_TABS: Record<Project, string[]> = {
   vncf: ["Custom Form Creation", "Visit Note - New", "Visit Note - Show"],
-  goals_v2: ["Goal Tab", "POC / Eval - New", "Visit Note - New", "Visit Note - Show", "Custom Form Setup"],
+  goals_v2: ["Goal Tab", "POC / Eval - New", "Custom Form Setup", "Visit Note - New (WIP)", "Visit Note - Show (WIP)"],
   progress_reports: ["Progress Report - New", "Progress Report - Show", "Custom Form Setup"],
 };
 
@@ -67,7 +67,9 @@ export default function TopNav({
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab
                   ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-400 hover:text-gray-600"
+                  : tab.includes("(WIP)")
+                    ? "border-transparent text-gray-300 hover:text-gray-400"
+                    : "border-transparent text-gray-400 hover:text-gray-600"
               }`}
             >
               {tab}
