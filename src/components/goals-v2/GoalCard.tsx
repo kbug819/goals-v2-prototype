@@ -7,15 +7,6 @@ import ProgressBar from "@/components/shared/ProgressBar";
 import ScaleProgress from "@/components/shared/ScaleProgress";
 import { formatDate, formatDateShort } from "@/utils/formatDate";
 
-function VersionLabel({ goal }: { goal: PatientGoal }) {
-  const prefix =
-    goal.goal_type === "short_term" ? "STG" : "LTG";
-  return (
-    <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-      {prefix} {goal.version_a}.{goal.version_b}.{goal.version_c}
-    </span>
-  );
-}
 
 function MeasurementDisplay({ goal }: { goal: PatientGoal }) {
   const latest = goal.data_points[goal.data_points.length - 1];
@@ -262,51 +253,60 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
   const hasChildren = goal.children.length > 0;
   const isChild = depth > 0;
 
+  const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+  const headerBg =
+    goal.current_status === "met" ? "bg-blue-100/80" :
+    goal.current_status === "discontinued" ? "bg-red-100/80" :
+    goal.current_status === "pending" ? "bg-amber-100/80" :
+    "bg-indigo-100/70";
+  const headerText =
+    goal.current_status === "met" ? "text-blue-900" :
+    goal.current_status === "discontinued" ? "text-red-900" :
+    goal.current_status === "pending" ? "text-amber-900" :
+    "text-indigo-900";
+
   return (
-    <div className={`${isChild ? "ml-6 border-l-2 border-indigo-100 pl-4" : ""}`}>
-      <div
-        className={`bg-white rounded-lg border transition-shadow ${
-          goal.current_status === "met" ? "border-blue-200 bg-blue-50/30" :
-          goal.current_status === "discontinued" ? "border-red-200 bg-red-50/30" :
-          goal.current_status === "pending" ? "border-amber-200 bg-amber-50/30" :
-          "border-gray-200 hover:shadow-md"
-        }`}
-      >
-        {/* Header */}
+    <div className={`${isChild ? "ml-8 mt-2" : ""}`}>
+      {isChild && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
+      <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+        {/* Header bar */}
         <div
-          className="flex items-center justify-between px-4 py-3 cursor-pointer"
+          className={`flex items-center justify-between px-4 py-2.5 cursor-pointer ${headerBg}`}
           onClick={() => setExpanded(!expanded)}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <button className="text-gray-400 hover:text-gray-600 flex-shrink-0">
-              <svg className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <VersionLabel goal={goal} />
-            <StatusBadge status={goal.current_status} />
-            {goal.met_on && <span className="text-xs text-gray-400">Met {formatDate(goal.met_on)}</span>}
+            <svg className={`w-4 h-4 text-gray-500 transition-transform flex-shrink-0 ${expanded ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className={`text-sm font-bold ${headerText}`}>
+              {goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}
+            </span>
+            <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+            {goal.met_on && <span className="text-xs text-gray-500">Met {formatDate(goal.met_on)}</span>}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {hasChildren && (
-              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+              <span className="text-xs text-gray-500 bg-white/60 px-2 py-0.5 rounded font-medium">
                 {goal.children.length} STG{goal.children.length > 1 ? "s" : ""}
               </span>
             )}
             {goal.linked_document && !goal.linked_document.signed && (
-              <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs text-amber-700 bg-amber-200/60 px-2 py-0.5 rounded font-medium flex items-center gap-1">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Unsigned
               </span>
             )}
+            <span className="text-xs font-medium text-gray-600">
+              {goal.current_status.charAt(0).toUpperCase() + goal.current_status.slice(1)}
+            </span>
           </div>
         </div>
 
         {/* Expanded content */}
         {expanded && (
-          <div className="px-4 pb-4 space-y-3">
+          <div className="bg-gray-50/60 px-4 py-4 space-y-3">
             {/* Unsigned document banner */}
             {goal.linked_document && !goal.linked_document.signed && (
               <div className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-amber-700">
@@ -332,8 +332,9 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
 
             {/* Current functional level (from latest event) */}
             {goal.events.length > 0 && goal.events[goal.events.length - 1].current_functional_level && (
-              <div className="text-xs text-gray-500">
-                <span className="font-medium text-gray-600">Current function:</span> {goal.events[goal.events.length - 1].current_functional_level}
+              <div className="bg-white rounded px-3 py-2 border border-gray-200">
+                <span className="text-xs font-semibold text-gray-600">Current function:</span>
+                <span className="text-xs text-gray-500 ml-1">{goal.events[goal.events.length - 1].current_functional_level}</span>
               </div>
             )}
 
@@ -341,7 +342,6 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
             <div className="flex flex-wrap gap-4 text-xs text-gray-500">
               <span>Start: {formatDate(goal.start_date)}</span>
               {goal.target_date && <span>Target: {formatDate(goal.target_date)}</span>}
-              <span className="capitalize">Type: {goal.measurement_type}</span>
             </div>
 
             {/* Toggle buttons + current comment */}
@@ -350,7 +350,7 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowHistory(!showHistory); }}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex-shrink-0 ${
-                    showHistory ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                    showHistory ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-100"
                   }`}
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -362,7 +362,7 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowDataPoints(!showDataPoints); }}
                     className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex-shrink-0 ${
-                      showDataPoints ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                      showDataPoints ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-100"
                     }`}
                   >
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -373,7 +373,7 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
                 )}
               </div>
               {goal.events.length > 0 && goal.events[goal.events.length - 1].comment && (
-                <span title={goal.events[goal.events.length - 1].comment!} className="inline-flex items-center gap-1.5 text-xs text-gray-500 italic bg-gray-100 rounded-full px-2.5 py-1 truncate max-w-xs cursor-default">
+                <span title={goal.events[goal.events.length - 1].comment!} className="inline-flex items-center gap-1.5 text-xs text-gray-500 italic bg-white border border-gray-200 rounded-full px-2.5 py-1 truncate max-w-xs cursor-default">
                   <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                   </svg>
@@ -389,7 +389,7 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
 
       {/* Children */}
       {expanded && hasChildren && (
-        <div className="mt-2 space-y-2">
+        <div className="space-y-2">
           {goal.children.map((child) => (
             <GoalCard key={child.id} goal={child} depth={depth + 1} activeFilter={activeFilter} />
           ))}

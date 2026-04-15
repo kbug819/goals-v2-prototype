@@ -5,12 +5,14 @@ import TopNav from "@/components/shared/TopNav";
 import GoalCard from "@/components/goals-v2/GoalCard";
 import GoalsFilter from "@/components/goals-v2/GoalsFilter";
 import CustomFormView from "@/components/goals-v2/CustomFormView";
+import ComponentSetupView from "@/components/goals-v2/ComponentSetupView";
 import CustomFormCreationView from "@/components/visit-note/CustomFormCreationView";
 import VisitNoteNewView from "@/components/visit-note/VisitNoteNewView";
 import VisitNoteView from "@/components/visit-note/VisitNoteView";
 import DevNote from "@/components/shared/DevNote";
 import ProgressReportNewView from "@/components/progress-report/ProgressReportNewView";
 import ProgressReportShowView from "@/components/progress-report/ProgressReportShowView";
+import PRComponentSetupView from "@/components/progress-report/ComponentSetupView";
 import { mockPatient, mockGoals, GoalStatus, PatientGoal } from "@/data/mockData";
 
 function countGoalsByStatus(goals: PatientGoal[]): Record<string, number> {
@@ -116,6 +118,8 @@ export default function Home() {
       {activeTab === "POC / Eval - New" && <CustomFormView />}
       {activeTab === "Visit Note - New" && <VisitNoteNewView project={project} />}
       {activeTab === "Visit Note - Show" && <VisitNoteView project={project} />}
+      {activeTab === "Custom Form Setup" && project === "goals_v2" && <ComponentSetupView />}
+      {activeTab === "Custom Form Setup" && project === "progress_reports" && <PRComponentSetupView />}
       {activeTab === "Progress Report - New" && <ProgressReportNewView />}
       {activeTab === "Progress Report - Show" && <ProgressReportShowView />}
     </div>

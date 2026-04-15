@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { mockGoals, PatientGoal } from "@/data/mockData";
 import { V1_MOCK_GOALS, PROMPTING_LEVELS, PROMPTING_TYPES } from "@/data/v1MockData";
-import StatusBadge from "@/components/shared/StatusBadge";
+
 import DevNote from "@/components/shared/DevNote";
 import { formatDate } from "@/utils/formatDate";
 
@@ -17,10 +17,10 @@ const NOTE_FORMATS: { value: NoteFormat; label: string; shortLabel: string; desc
   { value: "freetext_v1goalprogress", label: "w/ Goal Progress", shortLabel: "w/ Goal Progress", description: "Free text narrative with trials and prompting data" },
   { value: "freetext_v1goaladmin", label: "w/ Goal Admin Components", shortLabel: "w/ Goal Admin Components", description: "Free text with goals and admin-configured components per goal" },
   { value: "freetext_v1goalcustom", label: "w/ Goal Custom Components", shortLabel: "w/ Goal Custom Components", description: "Free text with goals and customizable components per goal" },
-  { value: "freetext_goals", label: "w/ Goal Progress", shortLabel: "w/ Goal Progress", description: "Free text narrative with structured goal tracking" },
-  { value: "freetext_goallist", label: "w/ Goal List", shortLabel: "w/ Goal List", description: "Free text narrative with goal checklist" },
-  { value: "freetext_v2goaladmin", label: "w/ Goal Admin Components", shortLabel: "w/ Goal Admin Components", description: "Free text with V2 goals and admin-configured components" },
-  { value: "freetext_v2goalcustom", label: "w/ Goal Custom Components", shortLabel: "w/ Goal Custom Components", description: "Free text with V2 goals and customizable components per goal" },
+  { value: "freetext_goals", label: "w/ Goal Progress (smart-goal-data-collection)", shortLabel: "w/ Goal Progress", description: "Full measurement logging per goal per session — writes goal_data_points" },
+  { value: "freetext_goallist", label: "w/ Goal List (smart-goals-session-checklist)", shortLabel: "w/ Goal List", description: "Lightweight goal checklist with notes per goal — writes goal_data_points" },
+  { value: "freetext_v2goaladmin", label: "w/ Goal Admin Components (smart-goal-admin-collection)", shortLabel: "w/ Goal Admin", description: "Admin-configured components per goal — org sets up fields in Custom Form Editor" },
+  { value: "freetext_v2goalcustom", label: "w/ Goal Custom Components (smart-goal-custom-collection)", shortLabel: "w/ Goal Custom", description: "Therapist adds custom components per goal at fill time" },
 ];
 
 const DISCIPLINES = ["Speech", "OT", "PT"];
@@ -813,84 +813,116 @@ function FreeTextGoalProgress() {
         <textarea rows={6} placeholder="Write your clinical note here..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
       </div>
 
-      {/* Goal Progress - always visible */}
+      {/* Goal Data Collection */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Goal Progress <span className="ml-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">Possible new custom form component</span></h3>
+          <h3 className="text-sm font-semibold text-gray-700">Goal Data Collection</h3>
           <span className="text-xs text-gray-400">{Object.values(updates).filter((u) => u.value).length} of {speechGoals.length} updated</span>
         </div>
-          <div className="space-y-2">
-            {speechGoals.map((goal) => {
-              const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
-              const latestDataPoint = goal.data_points[goal.data_points.length - 1];
-              const update = updates[goal.id];
-              const hasUpdate = update?.value?.trim();
+        <div className="space-y-3">
+          {speechGoals.map((goal) => {
+            const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+            const latestDataPoint = goal.data_points[goal.data_points.length - 1];
+            const update = updates[goal.id];
+            const hasUpdate = update?.value?.trim();
+            const isChild = goal.goal_type === "short_term";
 
-              return (
-                <div
-                  key={goal.id}
-                  className={`border rounded-lg px-4 py-3 ${
-                    hasUpdate ? "border-green-200 bg-green-50/30" : "border-gray-200 bg-white"
-                  } ${goal.goal_type === "short_term" ? "ml-6" : ""}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded flex-shrink-0">
-                        {prefix} {goal.version_a}.{goal.version_b}.{goal.version_c}
+            return (
+              <div key={goal.id} className={`${isChild ? "ml-8" : ""}`}>
+                {isChild && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
+                <div className={`rounded-lg overflow-hidden border shadow-sm ${
+                  hasUpdate ? "border-green-200" : "border-gray-200"
+                }`}>
+                  {/* Header bar */}
+                  <div className={`flex items-center justify-between px-4 py-2 ${hasUpdate ? "bg-green-100/70" : "bg-indigo-100/70"}`}>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-sm font-bold ${hasUpdate ? "text-green-900" : "text-indigo-900"}`}>
+                        {goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}
                       </span>
-                      <StatusBadge status={goal.current_status} />
-                      <span className="text-xs text-gray-400 capitalize">{goal.measurement_type}</span>
-                      {latestDataPoint && (
-                        <>
-                          <span className="text-gray-300">|</span>
-                          <span className="text-xs text-gray-500">Last: {formatGoalValue(latestDataPoint.value, goal)}</span>
-                        </>
-                      )}
+                      <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
                     </div>
-                    {hasUpdate && (
-                      <span className="inline-flex items-center gap-1 text-xs text-green-600">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="flex items-center gap-2">
+                      {latestDataPoint && (
+                        <span className="text-xs text-gray-500">Last: {formatGoalValue(latestDataPoint.value, goal)}</span>
+                      )}
+                      {hasUpdate && (
+                        <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                      </span>
-                    )}
+                      )}
+                    </div>
                   </div>
 
-                  <p className="text-sm text-gray-500 mt-1.5 leading-relaxed truncate">{goal.goal_text}</p>
+                  {/* Body */}
+                  <div className="bg-gray-50/60 px-4 py-3">
+                    <p className="text-sm text-gray-600 leading-relaxed">{goal.goal_text}</p>
 
-                  <div className="grid grid-cols-3 gap-2 mt-2">
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-0.5">Measurement</label>
-                      <input
-                        value={update?.value || ""}
-                        onChange={(e) => updateField(goal.id, "value", e.target.value)}
-                        placeholder={goal.measurement_type === "percentage" ? "e.g. 75" : goal.measurement_type === "scale" ? "e.g. moderate assist" : "Value"}
-                        className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-0.5">Activity</label>
-                      <input
-                        value={update?.activity || ""}
-                        onChange={(e) => updateField(goal.id, "activity", e.target.value)}
-                        placeholder="e.g. Articulation drills"
-                        className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-0.5">Note</label>
-                      <input
-                        value={update?.note || ""}
-                        onChange={(e) => updateField(goal.id, "note", e.target.value)}
-                        placeholder="Optional"
-                        className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
+                    {/* Measurement trajectory */}
+                    {goal.baseline_value && goal.target_value && (() => {
+                      const dp = goal.data_points;
+                      const currentDp = dp.length > 0 ? dp[dp.length - 1] : null;
+                      const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
+                      const previousDp = dp.length > 2 ? dp[prevIdx] : null;
+
+                      return (
+                        <div className={`grid gap-3 mt-3 ${previousDp ? "grid-cols-4" : "grid-cols-3"}`}>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Baseline <span className="font-normal text-gray-400">{formatDate(goal.start_date)}</span></label>
+                            <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatGoalValue(goal.baseline_value, goal)}</div>
+                          </div>
+                          {previousDp && (
+                            <div>
+                              <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Previous <span className="font-normal text-gray-400">{formatDate(previousDp.recorded_at)}</span></label>
+                              <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatGoalValue(previousDp.value, goal)}</div>
+                            </div>
+                          )}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-indigo-600 mb-0.5">Current <span className="font-normal text-indigo-400">{currentDp ? formatDate(currentDp.recorded_at) : ""}</span></label>
+                            <div className="border border-indigo-200 rounded px-2 py-1 bg-indigo-50 text-xs font-semibold text-indigo-700">{currentDp ? formatGoalValue(currentDp.value, goal) : "—"}</div>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Target <span className="font-normal text-gray-400">{goal.target_date ? formatDate(goal.target_date) : ""}</span></label>
+                            <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatGoalValue(goal.target_value, goal)}</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="grid grid-cols-3 gap-3 mt-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Today&#39;s Measurement</label>
+                        <input
+                          value={update?.value || ""}
+                          onChange={(e) => updateField(goal.id, "value", e.target.value)}
+                          placeholder={goal.measurement_type === "percentage" ? "e.g. 75" : goal.measurement_type === "scale" ? "e.g. moderate assist" : "Value"}
+                          className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Activity</label>
+                        <input
+                          value={update?.activity || ""}
+                          onChange={(e) => updateField(goal.id, "activity", e.target.value)}
+                          placeholder="e.g. Articulation drills"
+                          className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Note</label>
+                        <input
+                          value={update?.note || ""}
+                          onChange={(e) => updateField(goal.id, "note", e.target.value)}
+                          placeholder="Optional"
+                          className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -919,50 +951,72 @@ function FreeTextGoalList() {
       </div>
 
       <div>
-        <div className="flex items-center gap-2 mb-2">
-          <label className="text-xs font-medium text-gray-500">Goals Addressed <span className="ml-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">Possible new custom form component</span></label>
-          <span className="text-xs text-gray-400 italic">Only checked goals will show on the completed visit note</span>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Session Checklist</h3>
+          <span className="text-xs text-gray-400">Check goals addressed this session</span>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {speechGoals.map((goal) => {
-            const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
+            const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
             const isChecked = checked[goal.id] || false;
+            const isChild = goal.goal_type === "short_term";
 
             return (
-              <div
-                key={goal.id}
-                className={`border rounded-lg px-4 py-3 ${
-                  isChecked ? "border-indigo-200 bg-indigo-50/30" : "border-gray-200 bg-white"
-                } ${goal.goal_type === "short_term" ? "ml-6" : ""}`}
-              >
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={(e) => setChecked({ ...checked, [goal.id]: e.target.checked })}
-                    className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                        {prefix} {goal.version_a}.{goal.version_b}.{goal.version_c}
+              <div key={goal.id} className={`${isChild ? "ml-8" : ""}`}>
+                {isChild && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
+                <div className={`rounded-lg overflow-hidden border shadow-sm ${
+                  isChecked ? "border-indigo-200" : "border-gray-200"
+                }`}>
+                  {/* Header bar */}
+                  <label className={`flex items-center justify-between px-4 py-2 cursor-pointer ${
+                    isChecked ? "bg-indigo-100/80" : "bg-gray-100/80"
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => setChecked({ ...checked, [goal.id]: e.target.checked })}
+                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className={`text-sm font-bold ${isChecked ? "text-indigo-900" : "text-gray-700"}`}>
+                        {goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}
                       </span>
-                      <span className="text-xs text-gray-400 capitalize">{goal.measurement_type}</span>
+                      <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1 leading-relaxed">{goal.goal_text}</p>
+                    {isChecked && (
+                      <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </label>
+
+                  {/* Body */}
+                  <div className={`px-4 py-3 ${isChecked ? "bg-indigo-50/30" : "bg-gray-50/60"}`}>
+                    <p className="text-sm text-gray-600 leading-relaxed">{goal.goal_text}</p>
+                    {isChecked && (
+                      <div className="mt-3 grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">Current Functional Level</label>
+                          <textarea
+                            rows={2}
+                            placeholder="Update patient's current functional status..."
+                            className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">Session Notes</label>
+                          <textarea
+                            value={notes[goal.id] || ""}
+                            onChange={(e) => setNotes({ ...notes, [goal.id]: e.target.value })}
+                            rows={2}
+                            placeholder="Notes for this goal..."
+                            className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </label>
-                {isChecked && (
-                  <div className="mt-2 ml-7">
-                    <textarea
-                      value={notes[goal.id] || ""}
-                      onChange={(e) => setNotes({ ...notes, [goal.id]: e.target.value })}
-                      rows={2}
-                      placeholder="Notes for this goal..."
-                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                    />
-                  </div>
-                )}
+                </div>
               </div>
             );
           })}
@@ -1321,11 +1375,11 @@ function NoteForm({ format }: { format: NoteFormat }) {
 }
 
 const VNCF_FORMATS = NOTE_FORMATS.filter((f) => ["soap", "freetext", "dap", "freetext_v1goallist", "freetext_v1goalprogress", "freetext_v1goaladmin", "freetext_v1goalcustom"].includes(f.value));
-const V2_FORMATS = NOTE_FORMATS.filter((f) => ["soap", "freetext", "dap", "freetext_goals", "freetext_goallist", "freetext_v2goaladmin", "freetext_v2goalcustom"].includes(f.value));
+const V2_FORMATS = NOTE_FORMATS.filter((f) => ["freetext_goals", "freetext_goallist", "freetext_v2goaladmin", "freetext_v2goalcustom"].includes(f.value));
 
 export default function VisitNoteNewView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" | "progress_reports" }) {
   const visibleFormats = project === "vncf" ? VNCF_FORMATS : V2_FORMATS;
-  const [selectedFormat, setSelectedFormat] = useState<NoteFormat>("soap");
+  const [selectedFormat, setSelectedFormat] = useState<NoteFormat>(project === "vncf" ? "soap" : "freetext_goals");
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">

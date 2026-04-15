@@ -257,11 +257,10 @@ const VNCF_SHOW_FORMATS: { value: ShowFormat; label: string }[] = [
 ];
 
 const V2_SHOW_FORMATS: { value: ShowFormat; label: string }[] = [
-  { value: "soap", label: "SOAP" },
   { value: "freetext_goalprogress", label: "w/ Goal Progress" },
   { value: "freetext_goallist", label: "w/ Goal List" },
-  { value: "freetext_v2goaladmin", label: "w/ Goal Admin Components" },
-  { value: "freetext_v2goalcustom", label: "w/ Goal Custom Components" },
+  { value: "freetext_v2goaladmin", label: "w/ Goal Admin" },
+  { value: "freetext_v2goalcustom", label: "w/ Goal Custom" },
 ];
 
 export default function VisitNoteView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" | "progress_reports" }) {
@@ -270,7 +269,7 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
   const [aiState, setAiState] = useState<"idle" | "loading" | "done">("idle");
   const [aiSuggestions, setAiSuggestions] = useState<AiGoalSuggestion[]>([]);
   const [showGoalProgress, setShowGoalProgress] = useState(false);
-  const [showFormat, setShowFormat] = useState<ShowFormat>("soap");
+  const [showFormat, setShowFormat] = useState<ShowFormat>(project === "vncf" ? "soap" : "freetext_goalprogress");
 
   // Only show active Speech goals for visit note
   const speechGoals: PatientGoal[] = [];
@@ -407,7 +406,7 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
         <div className="px-5 py-4 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900 mb-3">Note</h3>
 
-          {(showFormat === "soap" || project === "goals_v2") && (
+          {(showFormat === "soap" || showFormat === "freetext" || showFormat === "dap" || project === "goals_v2") && (
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-semibold text-gray-800 mb-1">Subjective</h4>
@@ -757,6 +756,234 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
           )}
         </div>
 
+        {/* V2 Goal Progress - saved view */}
+        {showFormat === "freetext_goalprogress" && project === "goals_v2" && (
+          <div className="px-5 py-4 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Goal Data Collection</h3>
+            <div className="space-y-3">
+              {speechGoals.filter((g) => g.goal_type !== "short_term").map((goal) => {
+                const goalLabel = "Long Term Goal";
+                const latestDp = goal.data_points[goal.data_points.length - 1];
+                const children = speechGoals.filter((c) => c.parent_id === goal.id);
+                return (
+                  <div key={goal.id}>
+                    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                      <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
+                          <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-600">Active</span>
+                      </div>
+                      <div className="bg-gray-50/60 px-4 py-3 space-y-2">
+                        <p className="text-sm text-gray-600">{goal.goal_text}</p>
+                        {latestDp && (
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                              <span className="text-[11px] font-semibold text-gray-500 block">Today&apos;s Measurement</span>
+                              <span className="text-sm font-semibold text-indigo-700">{formatValue(latestDp.value, goal)}</span>
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                              <span className="text-[11px] font-semibold text-gray-500 block">Activity</span>
+                              <span className="text-sm text-gray-600">{latestDp.activity_name || "—"}</span>
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                              <span className="text-[11px] font-semibold text-gray-500 block">Note</span>
+                              <span className="text-sm text-gray-600">{latestDp.note || "—"}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {children.map((child) => {
+                      const childDp = child.data_points[child.data_points.length - 1];
+                      return (
+                        <div key={child.id} className="ml-8 mt-2">
+                          <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>
+                          <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                            <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm font-bold text-indigo-900">{child.version_a}.{child.version_b}.{child.version_c} Short Term Goal</span>
+                                <span className="text-xs font-medium text-gray-500 capitalize">{child.measurement_type}</span>
+                              </div>
+                              <span className="text-xs font-medium text-gray-600">Active</span>
+                            </div>
+                            <div className="bg-gray-50/60 px-4 py-3 space-y-2">
+                              <p className="text-sm text-gray-600">{child.goal_text}</p>
+                              {childDp && (
+                                <div className="grid grid-cols-3 gap-3">
+                                  <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                                    <span className="text-[11px] font-semibold text-gray-500 block">Today&apos;s Measurement</span>
+                                    <span className="text-sm font-semibold text-indigo-700">{formatValue(childDp.value, child)}</span>
+                                  </div>
+                                  <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                                    <span className="text-[11px] font-semibold text-gray-500 block">Activity</span>
+                                    <span className="text-sm text-gray-600">{childDp.activity_name || "—"}</span>
+                                  </div>
+                                  <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                                    <span className="text-[11px] font-semibold text-gray-500 block">Note</span>
+                                    <span className="text-sm text-gray-600">{childDp.note || "—"}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* V2 Goal List - saved view */}
+        {showFormat === "freetext_goallist" && project === "goals_v2" && (
+          <div className="px-5 py-4 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Session Checklist</h3>
+            <div className="space-y-3">
+              {speechGoals.filter((g) => g.goal_type !== "short_term").slice(0, 2).map((goal) => {
+                const children = speechGoals.filter((c) => c.parent_id === goal.id);
+                return (
+                  <div key={goal.id}>
+                    <div className="rounded-lg overflow-hidden border border-indigo-200 shadow-sm">
+                      <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/80">
+                        <div className="flex items-center gap-3">
+                          <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} Long Term Goal</span>
+                          <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-600">Addressed</span>
+                      </div>
+                      <div className="bg-indigo-50/30 px-4 py-3 space-y-2">
+                        <p className="text-sm text-gray-600">{goal.goal_text}</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                            <span className="text-[11px] font-semibold text-gray-500 block">Current Functional Level</span>
+                            <span className="text-sm text-gray-600">Producing /r/ at 72% across positions; initial position strongest at 85%</span>
+                          </div>
+                          <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                            <span className="text-[11px] font-semibold text-gray-500 block">Session Notes</span>
+                            <span className="text-sm text-gray-600 italic">Worked on this goal — good progress with visual supports today.</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {children.slice(0, 1).map((child) => (
+                      <div key={child.id} className="ml-8 mt-2">
+                        <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>
+                        <div className="rounded-lg overflow-hidden border border-indigo-200 shadow-sm">
+                          <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/80">
+                            <div className="flex items-center gap-3">
+                              <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                              <span className="text-sm font-bold text-indigo-900">{child.version_a}.{child.version_b}.{child.version_c} Short Term Goal</span>
+                            </div>
+                            <span className="text-xs font-medium text-gray-600">Addressed</span>
+                          </div>
+                          <div className="bg-indigo-50/30 px-4 py-3 space-y-2">
+                            <p className="text-sm text-gray-600">{child.goal_text}</p>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                                <span className="text-[11px] font-semibold text-gray-500 block">Current Functional Level</span>
+                                <span className="text-sm text-gray-600">Final position /r/ at 68%; -er endings most challenging</span>
+                              </div>
+                              <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                                <span className="text-[11px] font-semibold text-gray-500 block">Session Notes</span>
+                                <span className="text-sm text-gray-600 italic">Focused on final position — still challenging but improving with modeling.</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* V2 Goal Admin - saved view */}
+        {showFormat === "freetext_v2goaladmin" && project === "goals_v2" && (
+          <div className="px-5 py-4 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Goals w/ Admin Components</h3>
+            <div className="space-y-3">
+              {speechGoals.filter((g) => g.goal_type !== "short_term").map((goal) => {
+                const latestDp = goal.data_points[goal.data_points.length - 1];
+                return (
+                  <div key={goal.id}>
+                    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                      <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} Long Term Goal</span>
+                          <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-600">Active</span>
+                      </div>
+                      <div className="bg-gray-50/60 px-4 py-3 space-y-2">
+                        <p className="text-sm text-gray-600">{goal.goal_text}</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                            <span className="text-[11px] font-semibold text-gray-500 block">Progress Status</span>
+                            <span className="text-sm text-gray-600">{latestDp ? "Progressing" : "No data"}</span>
+                          </div>
+                          <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                            <span className="text-[11px] font-semibold text-gray-500 block">Session Notes</span>
+                            <span className="text-sm text-gray-600 italic">Responding well to visual cues, increasing accuracy</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* V2 Goal Custom - saved view */}
+        {showFormat === "freetext_v2goalcustom" && project === "goals_v2" && (
+          <div className="px-5 py-4 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">
+              Goals w/ Custom Components
+              <span className="ml-2 text-xs font-medium text-violet-600 bg-violet-100 rounded-full px-2 py-0.5">Future iteration</span>
+            </h3>
+            <div className="space-y-3">
+              {speechGoals.filter((g) => g.goal_type !== "short_term").slice(0, 2).map((goal) => (
+                <div key={goal.id}>
+                  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} Long Term Goal</span>
+                        <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+                      </div>
+                      <span className="text-xs font-medium text-gray-600">Active</span>
+                    </div>
+                    <div className="bg-gray-50/60 px-4 py-3 space-y-2">
+                      <p className="text-sm text-gray-600">{goal.goal_text}</p>
+                      <div className="space-y-1.5">
+                        <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 text-sm text-gray-600">
+                          <span className="text-[11px] font-semibold text-gray-500 block">Trials</span>
+                          29/40 (73%)
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 text-sm text-gray-600">
+                          <span className="text-[11px] font-semibold text-gray-500 block">Notes</span>
+                          <span className="italic">Responding well to visual cues, increasing accuracy in initial and medial positions</span>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 text-sm text-gray-600">
+                          <span className="text-[11px] font-semibold text-gray-500 block">Rating</span>
+                          4 / 5
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Additional fields - only for SOAP/Free Text/DAP */}
         {project === "vncf" && (showFormat === "soap" || showFormat === "freetext" || showFormat === "dap") && (
           <div className="px-5 py-4 border-b border-gray-200 space-y-3">
@@ -801,8 +1028,8 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
           </div>
         )}
 
-        {/* Goal Progress Section - only for Goals V2 or freetext_goalprogress */}
-        {project === "goals_v2" && (
+        {/* Goal Progress Section removed — data collection now happens on the visit note form (New), not the show page */}
+        {false && (
         <div className="px-5 py-4">
           {!showGoalProgress ? (
             <button
