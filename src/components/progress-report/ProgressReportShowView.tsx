@@ -525,6 +525,93 @@ function ProgressReportComparativeView() {
                         </div>
                       )}
 
+                      {/* Comparative chart */}
+                      {prev && currentVal && (goal.measurement_type === "percentage" || goal.measurement_type === "custom" || goal.measurement_type === "count" || goal.measurement_type === "duration") && (() => {
+                        // Build mock data points for both periods
+                        const baseVal = parseFloat(goal.baseline_value || "0");
+                        const prevVal = parseFloat(prev.value);
+                        const curVal = parseFloat(currentVal);
+                        const targetVal = parseFloat(goal.target_value || "100");
+
+                        // Previous period points (simulated progression)
+                        const prevPoints = [
+                          { label: "12/1", value: baseVal + (prevVal - baseVal) * 0.2 },
+                          { label: "12/15", value: baseVal + (prevVal - baseVal) * 0.4 },
+                          { label: "1/5", value: baseVal + (prevVal - baseVal) * 0.6 },
+                          { label: "1/20", value: baseVal + (prevVal - baseVal) * 0.8 },
+                          { label: "2/10", value: prevVal },
+                        ];
+                        // Current period points (from mock data or simulated)
+                        const curPoints = goal.data_points.length >= 2
+                          ? goal.data_points.map((dp) => ({ label: formatDateShort(dp.recorded_at), value: parseFloat(dp.value) }))
+                          : [
+                              { label: "3/5", value: prevVal + (curVal - prevVal) * 0.3 },
+                              { label: "3/19", value: prevVal + (curVal - prevVal) * 0.6 },
+                              { label: "4/2", value: curVal },
+                            ];
+                        const allPoints = [...prevPoints, ...curPoints];
+                        const allVals = [...allPoints.map((p) => p.value), baseVal, targetVal];
+                        const minV = Math.min(...allVals);
+                        const maxV = Math.max(...allVals);
+                        const range = maxV - minV || 1;
+
+                        const chartW = 500;
+                        const chartH = 100;
+                        const padX = 35;
+                        const padY = 15;
+                        const toX = (i: number) => padX + (i / (allPoints.length - 1)) * (chartW - padX * 2);
+                        const toY = (v: number) => padY + (1 - (v - minV) / range) * (chartH - padY * 2);
+
+                        const prevDots = prevPoints.map((p, i) => ({ x: toX(i), y: toY(p.value), ...p }));
+                        const curDots = curPoints.map((p, i) => ({ x: toX(prevPoints.length + i), y: toY(p.value), ...p }));
+                        const dividerX = (prevDots[prevDots.length - 1].x + curDots[0].x) / 2;
+                        const targetY = toY(targetVal);
+                        const baselineY = toY(baseVal);
+
+                        return (
+                          <div className="bg-white rounded-lg p-2 border border-gray-200">
+                            <div className="flex items-center gap-4 mb-1 px-2">
+                              <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-gray-400 rounded" /><span className="text-[10px] text-gray-400">Previous period</span></div>
+                              <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-indigo-500 rounded" /><span className="text-[10px] text-indigo-500">Current period</span></div>
+                            </div>
+                            <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+                              {/* Period background shading */}
+                              <rect x={padX} y={padY} width={dividerX - padX} height={chartH - padY * 2} fill="#f9fafb" />
+                              <rect x={dividerX} y={padY} width={chartW - padX - dividerX} height={chartH - padY * 2} fill="#eef2ff" opacity="0.5" />
+                              {/* Divider */}
+                              <line x1={dividerX} y1={padY} x2={dividerX} y2={chartH - padY} stroke="#d1d5db" strokeWidth="1" strokeDasharray="3 3" />
+                              {/* Target line */}
+                              <line x1={padX} y1={targetY} x2={chartW - padX} y2={targetY} stroke="#10b981" strokeWidth="1" strokeDasharray="4 3" />
+                              <text x={chartW - padX + 3} y={targetY + 3} fontSize="8" fill="#10b981">target</text>
+                              {/* Baseline line */}
+                              <line x1={padX} y1={baselineY} x2={chartW - padX} y2={baselineY} stroke="#d1d5db" strokeWidth="1" strokeDasharray="4 3" />
+                              <text x={chartW - padX + 3} y={baselineY + 3} fontSize="8" fill="#9ca3af">baseline</text>
+                              {/* Previous period line */}
+                              <polyline points={prevDots.map((d) => `${d.x},${d.y}`).join(" ")} fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinejoin="round" />
+                              {/* Current period line */}
+                              <polyline points={curDots.map((d) => `${d.x},${d.y}`).join(" ")} fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinejoin="round" />
+                              {/* Connecting line between periods */}
+                              <line x1={prevDots[prevDots.length - 1].x} y1={prevDots[prevDots.length - 1].y} x2={curDots[0].x} y2={curDots[0].y} stroke="#c7d2fe" strokeWidth="1.5" strokeDasharray="3 3" />
+                              {/* Previous dots */}
+                              {prevDots.map((d, i) => (
+                                <g key={`p${i}`}>
+                                  <circle cx={d.x} cy={d.y} r="3" fill="#9ca3af" stroke="#fff" strokeWidth="1.5" />
+                                  <text x={d.x} y={chartH - 3} textAnchor="middle" fontSize="7" fill="#9ca3af">{d.label}</text>
+                                </g>
+                              ))}
+                              {/* Current dots */}
+                              {curDots.map((d, i) => (
+                                <g key={`c${i}`}>
+                                  <circle cx={d.x} cy={d.y} r="3.5" fill="#6366f1" stroke="#fff" strokeWidth="1.5" />
+                                  <text x={d.x} y={d.y - 8} textAnchor="middle" fontSize="8" fill="#4b5563" fontWeight="600">{Math.round(d.value)}</text>
+                                  <text x={d.x} y={chartH - 3} textAnchor="middle" fontSize="7" fill="#6366f1">{d.label}</text>
+                                </g>
+                              ))}
+                            </svg>
+                          </div>
+                        );
+                      })()}
+
                       {/* Narrative */}
                       <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
                         <span className="text-[11px] font-semibold text-gray-500 block">Progress Narrative</span>
