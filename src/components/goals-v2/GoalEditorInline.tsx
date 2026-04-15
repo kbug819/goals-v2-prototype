@@ -400,12 +400,8 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
         baseline_value: baselineValue || null,
         target_value: targetValue || null,
         measurement_config: config,
-        version_a: goalType === "short_term" && parentGoal
-          ? parentGoal.version_a
-          : Math.max(0, ...existingGoals.filter((g) => g.goal_type !== "short_term").map((g) => g.version_a)) + 1,
-        version_b: goalType === "short_term" && parentGoal
-          ? Math.max(0, ...existingGoals.filter((g) => g.parent_id === parentGoal.id).map((g) => g.version_b)) + 1
-          : 0,
+        version_a: parentGoal ? parentGoal.version_a : (Math.max(0, ...existingGoals.filter((g) => g.goal_type !== "short_term").map((g) => g.version_a)) + 1),
+        version_b: parentGoal ? (Math.max(0, ...existingGoals.filter((g) => g.parent_id === parentGoal.id).map((g) => g.version_b)) + 1) : 0,
         version_c: 0,
         start_date: today,
         target_date: targetDate,
