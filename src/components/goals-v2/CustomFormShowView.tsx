@@ -278,7 +278,7 @@ export default function CustomFormShowView() {
       return { ...g, children: [...g.children, ...pendingChildren] };
     }),
     ...pendingGoals.filter((pg) => pg.goal_type !== "short_term"),
-  ];
+  ].sort((a, b) => a.version_a - b.version_a || a.version_b - b.version_b || a.version_c - b.version_c);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">

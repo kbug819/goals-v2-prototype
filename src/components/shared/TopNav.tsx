@@ -4,7 +4,7 @@ type Project = "vncf" | "goals_v2" | "progress_reports";
 
 const PROJECT_TABS: Record<Project, string[]> = {
   vncf: ["Custom Form Creation", "Visit Note - New", "Visit Note - Show"],
-  goals_v2: ["Goal Tab", "POC / Eval - New", "POC / Eval - Show", "Custom Form Setup", "Visit Note - New", "Visit Note - Show"],
+  goals_v2: ["POC / Eval - New", "POC / Eval - Show", "Goal Tab", "Custom Form Setup", "Visit Note - New", "Visit Note - Show"],
   progress_reports: ["Progress Report - New", "Progress Report - Show", "Custom Form Setup"],
 };
 
