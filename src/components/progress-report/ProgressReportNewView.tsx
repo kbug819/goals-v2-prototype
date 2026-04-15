@@ -133,7 +133,7 @@ function PRStatusActionRow({ goal, activeChildCount = 0, onStatusChange }: {
   }
 
   const cfg = {
-    continued: { label: "Continuing Goal", placeholder: "Progress update...", btnLabel: "Save Update", btnClass: "bg-indigo-600 hover:bg-indigo-700", borderColor: "border-indigo-200" },
+    continued: { label: "Continuing Goal", placeholder: "Reason for continuing (e.g. progressing well, continuing current approach)...", btnLabel: "Save Update", btnClass: "bg-indigo-600 hover:bg-indigo-700", borderColor: "border-indigo-200" },
     met: { label: "Marking as Met", placeholder: "How was this goal met?", btnLabel: "Confirm Met", btnClass: "bg-green-600 hover:bg-green-700", borderColor: "border-green-200" },
     discontinued: { label: "Discontinuing Goal", placeholder: "Reason for discontinuing...", btnLabel: "Confirm Discontinue", btnClass: "bg-red-600 hover:bg-red-700", borderColor: "border-red-200" },
   }[action];
@@ -283,10 +283,10 @@ function PRGoalCard({ goal, childGoals, showChart = false, onStatusChange, onRev
           {/* Status actions */}
           <PRStatusActionRow goal={goal} activeChildCount={childGoals.filter((c) => c.current_status === "active").length} onStatusChange={onStatusChange} />
 
-          {/* Narrative */}
+          {/* Narrative (per-report, payer-facing) */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Progress Narrative</label>
-            <textarea rows={2} placeholder="Describe patient's progress toward this goal..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Progress Narrative <span className="font-normal text-gray-400">Appears on signed report</span></label>
+            <textarea rows={2} placeholder="Summarize patient's progress toward this goal during this reporting period..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
           </div>
         </div>
       </div>
