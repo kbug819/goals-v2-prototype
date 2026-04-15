@@ -314,7 +314,7 @@ const SCALE_PRESETS: { name: string; levels: string[] }[] = [
   { name: "Frequency", levels: ["never", "rarely", "sometimes", "often", "usually", "always"] },
 ];
 
-const COUNT_UNIT_PRESETS = ["trials", "requests", "repetitions", "occurrences", "attempts", "steps"];
+const COUNT_UNIT_PRESETS = ["trials", "requests", "repetitions", "occurrences", "attempts", "steps", "feet"];
 const COUNT_PER_PRESETS = ["session", "minute", "routine", "interaction", "set"];
 const DURATION_UNIT_PRESETS = ["seconds", "minutes"];
 
