@@ -246,6 +246,90 @@ function getMockAiAnalysis(goals: PatientGoal[]): AiGoalSuggestion[] {
 // ── Main view ──
 type ShowFormat = "soap" | "freetext" | "dap" | "freetext_goallist" | "freetext_goalprogress" | "freetext_goaladmin" | "freetext_goalcustom" | "freetext_v2goaladmin" | "freetext_v2goalcustom";
 
+// ── Goal Data Collection show card (read-only, with trajectory) ──
+function GoalDataShowCard({ goal }: { goal: PatientGoal }) {
+  const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+  const latestDp = goal.data_points.length > 0 ? goal.data_points[goal.data_points.length - 1] : null;
+  const latestEvent = goal.events.length > 0 ? goal.events[goal.events.length - 1] : null;
+
+  return (
+    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
+          <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+        </div>
+        <span className="text-xs font-medium text-gray-600">{goal.current_status.charAt(0).toUpperCase() + goal.current_status.slice(1)}</span>
+      </div>
+      <div className="bg-gray-50/60 px-4 py-3 space-y-3">
+        <p className="text-sm text-gray-600">{goal.goal_text}</p>
+
+        {/* Measurement trajectory */}
+        {goal.baseline_value && goal.target_value && goal.data_points.length > 0 && (() => {
+          const dp = goal.data_points;
+          const currentDp = dp[dp.length - 1];
+          const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
+          const previousDp = dp.length > 2 ? dp[prevIdx] : null;
+          return (
+            <div className={`grid gap-3 ${previousDp ? "grid-cols-4" : "grid-cols-3"}`}>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Baseline <span className="font-normal text-gray-400">{formatDate(goal.start_date)}</span></label>
+                <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatValue(goal.baseline_value, goal)}</div>
+              </div>
+              {previousDp && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Previous <span className="font-normal text-gray-400">{formatDate(previousDp.recorded_at)}</span></label>
+                  <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatValue(previousDp.value, goal)}</div>
+                </div>
+              )}
+              <div>
+                <label className="block text-[11px] font-semibold text-indigo-600 mb-0.5">Current <span className="font-normal text-indigo-400">{formatDate(currentDp.recorded_at)}</span></label>
+                <div className="border border-indigo-200 rounded px-2 py-1 bg-indigo-50 text-xs font-semibold text-indigo-700">{formatValue(currentDp.value, goal)}</div>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Target <span className="font-normal text-gray-400">{goal.target_date ? formatDate(goal.target_date) : ""}</span></label>
+                <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatValue(goal.target_value, goal)}</div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Today's data */}
+        {latestDp && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+              <span className="text-[11px] font-semibold text-gray-500 block">Today&apos;s Measurement</span>
+              <span className="text-sm font-semibold text-indigo-700">{formatValue(latestDp.value, goal)}</span>
+            </div>
+            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+              <span className="text-[11px] font-semibold text-gray-500 block">Activity</span>
+              <span className="text-sm text-gray-600">{latestDp.activity_name || "—"}</span>
+            </div>
+            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+              <span className="text-[11px] font-semibold text-gray-500 block">Note</span>
+              <span className="text-sm text-gray-600">{latestDp.note || "—"}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Current functional level + Previous comment */}
+        {(latestEvent?.current_functional_level || latestEvent?.comment) && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+              <span className="text-[11px] font-semibold text-gray-500 block">Current Functional Level {latestEvent?.occurred_on ? <span className="font-normal text-gray-400">{formatDate(latestEvent.occurred_on)}</span> : null}</span>
+              <span className="text-sm text-gray-600">{latestEvent?.current_functional_level || "—"}</span>
+            </div>
+            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+              <span className="text-[11px] font-semibold text-gray-500 block">Previous Comment {latestEvent?.occurred_on ? <span className="font-normal text-gray-400">{formatDate(latestEvent.occurred_on)}</span> : null}</span>
+              <span className="text-sm text-gray-600 italic">{latestEvent?.comment || "—"}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const VNCF_SHOW_FORMATS: { value: ShowFormat; label: string }[] = [
   { value: "soap", label: "SOAP" },
   { value: "freetext", label: "Free Text" },
@@ -762,75 +846,16 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Goal Data Collection</h3>
             <div className="space-y-3">
               {speechGoals.filter((g) => g.goal_type !== "short_term").map((goal) => {
-                const goalLabel = "Long Term Goal";
-                const latestDp = goal.data_points[goal.data_points.length - 1];
                 const children = speechGoals.filter((c) => c.parent_id === goal.id);
                 return (
                   <div key={goal.id}>
-                    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                      <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
-                          <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
-                        </div>
-                        <span className="text-xs font-medium text-gray-600">Active</span>
+                    <GoalDataShowCard goal={goal} />
+                    {children.map((child) => (
+                      <div key={child.id} className="ml-8 mt-2">
+                        <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>
+                        <GoalDataShowCard goal={child} />
                       </div>
-                      <div className="bg-gray-50/60 px-4 py-3 space-y-2">
-                        <p className="text-sm text-gray-600">{goal.goal_text}</p>
-                        {latestDp && (
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
-                              <span className="text-[11px] font-semibold text-gray-500 block">Today&apos;s Measurement</span>
-                              <span className="text-sm font-semibold text-indigo-700">{formatValue(latestDp.value, goal)}</span>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
-                              <span className="text-[11px] font-semibold text-gray-500 block">Activity</span>
-                              <span className="text-sm text-gray-600">{latestDp.activity_name || "—"}</span>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
-                              <span className="text-[11px] font-semibold text-gray-500 block">Note</span>
-                              <span className="text-sm text-gray-600">{latestDp.note || "—"}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {children.map((child) => {
-                      const childDp = child.data_points[child.data_points.length - 1];
-                      return (
-                        <div key={child.id} className="ml-8 mt-2">
-                          <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>
-                          <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                            <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm font-bold text-indigo-900">{child.version_a}.{child.version_b}.{child.version_c} Short Term Goal</span>
-                                <span className="text-xs font-medium text-gray-500 capitalize">{child.measurement_type}</span>
-                              </div>
-                              <span className="text-xs font-medium text-gray-600">Active</span>
-                            </div>
-                            <div className="bg-gray-50/60 px-4 py-3 space-y-2">
-                              <p className="text-sm text-gray-600">{child.goal_text}</p>
-                              {childDp && (
-                                <div className="grid grid-cols-3 gap-3">
-                                  <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
-                                    <span className="text-[11px] font-semibold text-gray-500 block">Today&apos;s Measurement</span>
-                                    <span className="text-sm font-semibold text-indigo-700">{formatValue(childDp.value, child)}</span>
-                                  </div>
-                                  <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
-                                    <span className="text-[11px] font-semibold text-gray-500 block">Activity</span>
-                                    <span className="text-sm text-gray-600">{childDp.activity_name || "—"}</span>
-                                  </div>
-                                  <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
-                                    <span className="text-[11px] font-semibold text-gray-500 block">Note</span>
-                                    <span className="text-sm text-gray-600">{childDp.note || "—"}</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    ))}
                   </div>
                 );
               })}
