@@ -160,24 +160,47 @@ function ChartsNewView() {
   );
 }
 
-// ── Goal card for default (simple narrative) ──
+// ── Goal card for Simple view (narrative + status update + functional level) ──
 function GoalNarrativeNew({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }) {
-  const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
-  const latestDataPoint = goal.data_points.length > 0 ? goal.data_points[goal.data_points.length - 1] : null;
+  const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+  const latestEvent = goal.events.length > 0 ? goal.events[goal.events.length - 1] : null;
+  const isChild = goal.goal_type === "short_term";
 
   return (
-    <div className={`${depth > 0 ? "ml-6 border-l-2 border-indigo-100 pl-4 mt-2" : ""}`}>
-      <div className="border border-gray-200 rounded-lg px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{prefix} {goal.version_a}.{goal.version_b}.{goal.version_c}</span>
-          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${goal.current_status === "active" ? "text-green-600 bg-green-50" : goal.current_status === "met" ? "text-blue-600 bg-blue-50" : "text-gray-600 bg-gray-100"}`}>{goal.current_status}</span>
-          {latestDataPoint ? (
-            <span className="text-xs text-gray-400">Current: {latestDataPoint.value.replace(/_/g, " ")}{goal.measurement_type === "percentage" ? "%" : ""}</span>
-          ) : null}
+    <div className={`${isChild && depth > 0 ? "ml-8 mt-2" : ""}`}>
+      {isChild && depth > 0 && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
+      <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
+            <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+          </div>
+          <span className="text-sm font-medium text-gray-700">Current status: {goal.current_status.charAt(0).toUpperCase() + goal.current_status.slice(1)}</span>
         </div>
-        <p className="text-sm text-gray-700 mt-1.5">{goal.goal_text}</p>
-        <div className="mt-2">
-          <textarea rows={2} placeholder="Progress narrative for this goal..." className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+        <div className="bg-gray-50/60 px-4 py-3 space-y-3">
+          <p className="text-sm text-gray-700 leading-relaxed">{goal.goal_text}</p>
+
+          {/* Status update + Current functional level */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Status Update</label>
+              <select className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option>Continue</option>
+                <option>Met</option>
+                <option>Discontinue</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Current Functional Level</label>
+              <input defaultValue={latestEvent?.current_functional_level || ""} placeholder="Update functional status..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+
+          {/* Narrative */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Progress Narrative</label>
+            <textarea rows={2} placeholder="Progress narrative for this goal..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+          </div>
         </div>
       </div>
       {goal.children.filter((c) => c.current_status === "active" || c.current_status === "met").map((child) => (
@@ -187,55 +210,94 @@ function GoalNarrativeNew({ goal, depth = 0 }: { goal: PatientGoal; depth?: numb
   );
 }
 
-// ── Goal card for charts view (with auto-summary + chart placeholder + narrative) ──
+// ── Goal card for Full view (trajectory + chart + status update + functional level + narrative) ──
 function GoalChartNew({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }) {
-  const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
+  const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
   const latestDataPoint = goal.data_points.length > 0 ? goal.data_points[goal.data_points.length - 1] : null;
+  const latestEvent = goal.events.length > 0 ? goal.events[goal.events.length - 1] : null;
+  const isChild = goal.goal_type === "short_term";
 
-  let progressPct = 0;
-  if (goal.measurement_type === "percentage" && goal.baseline_value && goal.target_value && latestDataPoint) {
-    progressPct = Math.round(((parseFloat(latestDataPoint.value) - parseFloat(goal.baseline_value)) / (parseFloat(goal.target_value) - parseFloat(goal.baseline_value))) * 100);
-  }
+  const fmtVal = (v: string) => {
+    const d = v.replace(/_/g, " ");
+    if (goal.measurement_type === "percentage") return `${d}%`;
+    if (goal.measurement_type === "duration") return `${d} ${(goal.measurement_config.unit as string) || "sec"}`;
+    if (goal.measurement_type === "count") return `${d} ${(goal.measurement_config.unit as string) || ""}`;
+    return d;
+  };
 
   return (
-    <div className={`${depth > 0 ? "ml-6 border-l-2 border-indigo-100 pl-4 mt-3" : ""}`}>
-      <div className="border border-gray-200 rounded-lg bg-white">
-        <div className="px-4 py-3 border-b border-gray-100">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{prefix} {goal.version_a}.{goal.version_b}.{goal.version_c}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${goal.current_status === "active" ? "text-green-600 bg-green-50" : goal.current_status === "met" ? "text-blue-600 bg-blue-50" : "text-gray-600 bg-gray-100"}`}>{goal.current_status}</span>
-            <span className="text-xs text-gray-400 capitalize">{goal.measurement_type}</span>
+    <div className={`${isChild && depth > 0 ? "ml-8 mt-2" : ""}`}>
+      {isChild && depth > 0 && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
+      <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
+            <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
           </div>
-          <p className="text-sm text-gray-700 mt-1.5">{goal.goal_text}</p>
+          <span className="text-sm font-medium text-gray-700">Current status: {goal.current_status.charAt(0).toUpperCase() + goal.current_status.slice(1)}</span>
         </div>
 
-        <div className="px-4 py-3 space-y-2">
-          {/* Auto-calculated summary */}
-          {goal.baseline_value && goal.target_value && latestDataPoint ? (
-            <div className="text-xs text-gray-600">
-              Baseline: {goal.baseline_value.replace(/_/g, " ")}{goal.measurement_type === "percentage" ? "%" : ""} → Current: {latestDataPoint.value.replace(/_/g, " ")}{goal.measurement_type === "percentage" ? "%" : ""} → Target: {goal.target_value.replace(/_/g, " ")}{goal.measurement_type === "percentage" ? "%" : ""}
-              {progressPct > 0 ? <span className="text-indigo-600 ml-1">({Math.min(progressPct, 100)}% to target)</span> : null}
-            </div>
-          ) : null}
+        <div className="bg-gray-50/60 px-4 py-3 space-y-3">
+          <p className="text-sm text-gray-700 leading-relaxed">{goal.goal_text}</p>
 
-          {/* Progress bar */}
-          {goal.measurement_type === "percentage" && progressPct > 0 ? (
-            <div className="w-full bg-gray-100 rounded-full h-2">
-              <div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${Math.min(100, progressPct)}%` }} />
-            </div>
-          ) : null}
+          {/* Measurement trajectory */}
+          {goal.baseline_value && goal.target_value && latestDataPoint && (() => {
+            const dp = goal.data_points;
+            const currentDp = dp[dp.length - 1];
+            const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
+            const previousDp = dp.length > 2 ? dp[prevIdx] : null;
+
+            return (
+              <div className={`grid gap-3 ${previousDp ? "grid-cols-4" : "grid-cols-3"}`}>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Baseline <span className="font-normal text-gray-400">{formatDate(goal.start_date)}</span></label>
+                  <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(goal.baseline_value!)}</div>
+                </div>
+                {previousDp && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Previous <span className="font-normal text-gray-400">{formatDate(previousDp.recorded_at)}</span></label>
+                    <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(previousDp.value)}</div>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-[11px] font-semibold text-indigo-600 mb-0.5">Current <span className="font-normal text-indigo-400">{formatDate(currentDp.recorded_at)}</span></label>
+                  <div className="border border-indigo-200 rounded px-2 py-1 bg-indigo-50 text-xs font-semibold text-indigo-700">{fmtVal(currentDp.value)}</div>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Target <span className="font-normal text-gray-400">{goal.target_date ? formatDate(goal.target_date) : ""}</span></label>
+                  <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(goal.target_value!)}</div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Chart placeholder */}
           {goal.data_points.length >= 2 ? (
-            <div className="bg-gray-50 rounded-lg px-4 py-6 text-center text-xs text-gray-400 border border-dashed border-gray-200">
-              📊 Auto-generated chart from {goal.data_points.length} data points ({formatDate(goal.data_points[0].recorded_at)} — {formatDate(goal.data_points[goal.data_points.length - 1].recorded_at)})
+            <div className="bg-white rounded-lg px-4 py-6 text-center text-xs text-gray-400 border border-dashed border-gray-200">
+              Auto-generated chart from {goal.data_points.length} data points ({formatDate(goal.data_points[0].recorded_at)} — {formatDate(goal.data_points[goal.data_points.length - 1].recorded_at)})
             </div>
           ) : null}
 
+          {/* Status update + Current functional level */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Status Update</label>
+              <select className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option>Continue</option>
+                <option>Met</option>
+                <option>Discontinue</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Current Functional Level</label>
+              <input defaultValue={latestEvent?.current_functional_level || ""} placeholder="Update functional status..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+
           {/* Narrative */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Progress Narrative</label>
-            <textarea rows={2} placeholder="Describe patient's progress toward this goal..." className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Progress Narrative</label>
+            <textarea rows={2} placeholder="Describe patient's progress toward this goal..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
           </div>
         </div>
       </div>

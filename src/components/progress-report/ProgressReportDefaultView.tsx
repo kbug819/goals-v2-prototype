@@ -4,64 +4,52 @@ import { mockGoals, mockPatient, PatientGoal } from "@/data/mockData";
 import { formatDate } from "@/utils/formatDate";
 
 function GoalNarrative({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }) {
-  const prefix = goal.goal_type === "short_term" ? "STG" : "LTG";
-  const isChild = depth > 0;
+  const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+  const isChild = goal.goal_type === "short_term";
   const latestEvent = goal.events.length > 0 ? goal.events[goal.events.length - 1] : null;
-  const latestDataPoint = goal.data_points.length > 0 ? goal.data_points[goal.data_points.length - 1] : null;
 
-  let currentValue = "";
-  if (latestDataPoint) {
-    currentValue = latestDataPoint.value.replace(/_/g, " ");
-    if (goal.measurement_type === "percentage") currentValue += "%";
-  }
+  // Mock narrative for show view
+  const narratives: Record<string, string> = {
+    "pg-1": "Patient has demonstrated steady improvement in /r/ production across word positions. Currently at 72% accuracy, up from 45% baseline.",
+    "pg-3": "Patient progressing toward target. Currently at 68% accuracy for final /r/, up from 40% baseline.",
+    "pg-4": "Patient has moved from maximal assist to moderate assist level for expressive language.",
+    "pg-5": "MLU has increased from 2.5 to 3.1 words. Patient using more descriptors and conjunctions.",
+  };
 
   return (
-    <div className={`${isChild ? "ml-6 border-l-2 border-indigo-100 pl-4 mt-3" : ""}`}>
-      <div className="border border-gray-200 rounded-lg bg-white px-4 py-3">
-        {/* Header */}
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-            {prefix} {goal.version_a}.{goal.version_b}.{goal.version_c}
-          </span>
-          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-            goal.current_status === "active" ? "text-green-600 bg-green-50" :
-            goal.current_status === "met" ? "text-blue-600 bg-blue-50" :
-            "text-gray-600 bg-gray-100"
-          }`}>
-            {goal.current_status}
-          </span>
-          {goal.met_on ? <span className="text-xs text-gray-400">Met {formatDate(goal.met_on)}</span> : null}
-          {goal.baseline_value && goal.target_value ? (
-            <span className="text-xs text-gray-400">
-              Baseline: {goal.baseline_value.replace(/_/g, " ")}{goal.measurement_type === "percentage" ? "%" : ""} → Target: {goal.target_value.replace(/_/g, " ")}{goal.measurement_type === "percentage" ? "%" : ""}
-            </span>
-          ) : null}
-          {currentValue ? (
-            <>
-              <span className="text-gray-300">|</span>
-              <span className="text-xs font-medium text-indigo-600">Current: {currentValue}</span>
-            </>
-          ) : null}
-        </div>
-
-        {/* Goal text */}
-        <p className="text-sm text-gray-700 mt-1.5 leading-relaxed">{goal.goal_text}</p>
-
-        {/* Current function */}
-        {latestEvent?.current_functional_level ? (
-          <div className="text-xs text-gray-500 mt-1.5">
-            <span className="font-medium text-gray-600">Current function:</span> {latestEvent.current_functional_level}
+    <div className={`${isChild && depth > 0 ? "ml-8 mt-2" : ""}`}>
+      {isChild && depth > 0 && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
+      <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
+            <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+            {goal.met_on ? <span className="text-xs text-gray-500">Met {formatDate(goal.met_on)}</span> : null}
           </div>
-        ) : null}
+          <span className="text-sm font-medium text-gray-700">{goal.current_status.charAt(0).toUpperCase() + goal.current_status.slice(1)}</span>
+        </div>
+        <div className="bg-gray-50/60 px-4 py-3 space-y-2">
+          <p className="text-sm text-gray-700 leading-relaxed">{goal.goal_text}</p>
 
-        {/* Narrative text area */}
-        <div className="mt-3">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Progress Narrative</label>
-          <textarea
-            rows={3}
-            placeholder="Describe patient's progress toward this goal during the reporting period..."
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-          />
+          {/* Functional level + status (read-only on signed doc) */}
+          {latestEvent?.current_functional_level && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                <span className="text-[11px] font-semibold text-gray-500 block">Current Functional Level</span>
+                <span className="text-sm text-gray-600">{latestEvent.current_functional_level}</span>
+              </div>
+              <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                <span className="text-[11px] font-semibold text-gray-500 block">Status Decision</span>
+                <span className="text-sm text-gray-600">Continue</span>
+              </div>
+            </div>
+          )}
+
+          {/* Narrative (read-only) */}
+          <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+            <span className="text-[11px] font-semibold text-gray-500 block">Progress Narrative</span>
+            <span className="text-sm text-gray-600 italic">{narratives[goal.id] || "No narrative provided."}</span>
+          </div>
         </div>
       </div>
 
