@@ -53,7 +53,7 @@ function DefaultNewView() {
           <h3 className="text-sm font-semibold text-gray-800 mb-3">Goal Progress</h3>
           <div className="space-y-3">
             {speechGoals.map((goal) => (
-              <GoalNarrativeNew key={goal.id} goal={goal} />
+              <GoalCardNew key={goal.id} goal={goal} />
             ))}
           </div>
         </div>
@@ -131,7 +131,7 @@ function ChartsNewView() {
           <p className="text-xs text-gray-400 italic mb-4">Charts auto-generated from goal_data_points within the reporting period. Narratives are editable.</p>
           <div className="space-y-4">
             {speechGoals.map((goal) => (
-              <GoalChartNew key={goal.id} goal={goal} />
+              <GoalCardNew key={goal.id} goal={goal} showChart />
             ))}
           </div>
         </div>
@@ -160,62 +160,9 @@ function ChartsNewView() {
   );
 }
 
-// ── Goal card for Simple view (narrative + status update + functional level) ──
-function GoalNarrativeNew({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }) {
-  const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+// ── Shared goal card body (reuses POC/Eval layout) ──
+function GoalCardBody({ goal, showChart = false }: { goal: PatientGoal; showChart?: boolean }) {
   const latestEvent = goal.events.length > 0 ? goal.events[goal.events.length - 1] : null;
-  const isChild = goal.goal_type === "short_term";
-
-  return (
-    <div className={`${isChild && depth > 0 ? "ml-8 mt-2" : ""}`}>
-      {isChild && depth > 0 && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
-      <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
-            <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
-          </div>
-          <span className="text-sm font-medium text-gray-700">Current status: {goal.current_status.charAt(0).toUpperCase() + goal.current_status.slice(1)}</span>
-        </div>
-        <div className="bg-gray-50/60 px-4 py-3 space-y-3">
-          <p className="text-sm text-gray-700 leading-relaxed">{goal.goal_text}</p>
-
-          {/* Status update + Current functional level */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Status Update</label>
-              <select className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option>Continue</option>
-                <option>Met</option>
-                <option>Discontinue</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Current Functional Level</label>
-              <input defaultValue={latestEvent?.current_functional_level || ""} placeholder="Update functional status..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            </div>
-          </div>
-
-          {/* Narrative */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Progress Narrative</label>
-            <textarea rows={2} placeholder="Progress narrative for this goal..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-          </div>
-        </div>
-      </div>
-      {goal.children.filter((c) => c.current_status === "active" || c.current_status === "met").map((child) => (
-        <GoalNarrativeNew key={child.id} goal={child} depth={depth + 1} />
-      ))}
-    </div>
-  );
-}
-
-// ── Goal card for Full view (trajectory + chart + status update + functional level + narrative) ──
-function GoalChartNew({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }) {
-  const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
-  const latestDataPoint = goal.data_points.length > 0 ? goal.data_points[goal.data_points.length - 1] : null;
-  const latestEvent = goal.events.length > 0 ? goal.events[goal.events.length - 1] : null;
-  const isChild = goal.goal_type === "short_term";
 
   const fmtVal = (v: string) => {
     const d = v.replace(/_/g, " ");
@@ -226,87 +173,103 @@ function GoalChartNew({ goal, depth = 0 }: { goal: PatientGoal; depth?: number }
   };
 
   return (
+    <div className="bg-gray-50/60 px-4 py-4 space-y-3">
+      <p className="text-sm text-gray-700 leading-relaxed">{goal.goal_text}</p>
+
+      {/* Measurement trajectory */}
+      {goal.baseline_value && goal.target_value && goal.data_points.length > 0 && (() => {
+        const dp = goal.data_points;
+        const currentDp = dp[dp.length - 1];
+        const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
+        const previousDp = dp.length > 2 ? dp[prevIdx] : null;
+
+        return (
+          <div className={`grid gap-3 ${previousDp ? "grid-cols-4" : "grid-cols-3"}`}>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Baseline <span className="font-normal text-gray-400">{formatDate(goal.start_date)}</span></label>
+              <div className="border border-gray-200 rounded px-2.5 py-1.5 bg-gray-50 text-sm text-gray-700">{fmtVal(goal.baseline_value!)}</div>
+            </div>
+            {previousDp && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Previous <span className="font-normal text-gray-400">{formatDate(previousDp.recorded_at)}</span></label>
+                <div className="border border-gray-200 rounded px-2.5 py-1.5 bg-gray-50 text-sm text-gray-700">{fmtVal(previousDp.value)}</div>
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-semibold text-indigo-700 mb-1">Current <span className="font-normal text-indigo-400">{formatDate(currentDp.recorded_at)}</span></label>
+              <div className="border border-indigo-200 rounded px-2.5 py-1.5 bg-indigo-50 text-sm font-semibold text-indigo-700">{fmtVal(currentDp.value)}</div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Target <span className="font-normal text-gray-400">{goal.target_date ? formatDate(goal.target_date) : ""}</span></label>
+              <div className="border border-gray-200 rounded px-2.5 py-1.5 bg-gray-50 text-sm text-gray-700">{fmtVal(goal.target_value!)}</div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Chart placeholder (Full only) */}
+      {showChart && goal.data_points.length >= 2 && (
+        <div className="bg-white rounded-lg px-4 py-6 text-center text-xs text-gray-400 border border-dashed border-gray-200">
+          Auto-generated chart from {goal.data_points.length} data points ({formatDate(goal.data_points[0].recorded_at)} — {formatDate(goal.data_points[goal.data_points.length - 1].recorded_at)})
+        </div>
+      )}
+
+      {/* Current functional level + Previous comment */}
+      {(latestEvent?.current_functional_level || latestEvent?.comment) && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Current Functional Level {latestEvent?.occurred_on ? <span className="font-normal text-gray-400">{formatDate(latestEvent.occurred_on)}</span> : null}</label>
+            <div className="text-sm text-gray-600 bg-gray-50 rounded px-2.5 py-1.5 border border-gray-200 min-h-[2.25rem]">{latestEvent?.current_functional_level || "—"}</div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Previous Comment {latestEvent?.occurred_on ? <span className="font-normal text-gray-400">{formatDate(latestEvent.occurred_on)}</span> : null}</label>
+            <div className="text-sm text-gray-600 italic bg-gray-50 rounded px-2.5 py-1.5 border border-gray-200 min-h-[2.25rem]">{latestEvent?.comment || "—"}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Status action buttons */}
+      <div className="flex items-center gap-2">
+        <button className="px-2.5 py-1 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">Continue</button>
+        <button className="px-2.5 py-1 text-xs font-medium text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors">Mark Met</button>
+        <button className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">Discontinue</button>
+      </div>
+
+      {/* Narrative (progress report addition) */}
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">Progress Narrative</label>
+        <textarea rows={2} placeholder="Describe patient's progress toward this goal..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+      </div>
+    </div>
+  );
+}
+
+// ── Goal card wrapper (Simple + Full share the same layout) ──
+function GoalCardNew({ goal, depth = 0, showChart = false }: { goal: PatientGoal; depth?: number; showChart?: boolean }) {
+  const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+  const isChild = goal.goal_type === "short_term";
+
+  return (
     <div className={`${isChild && depth > 0 ? "ml-8 mt-2" : ""}`}>
       {isChild && depth > 0 && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
       <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+        <div className="flex items-center justify-between px-4 py-2.5 bg-indigo-100/70">
           <div className="flex items-center gap-3">
             <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
             <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
           </div>
           <span className="text-sm font-medium text-gray-700">Current status: {goal.current_status.charAt(0).toUpperCase() + goal.current_status.slice(1)}</span>
         </div>
-
-        <div className="bg-gray-50/60 px-4 py-3 space-y-3">
-          <p className="text-sm text-gray-700 leading-relaxed">{goal.goal_text}</p>
-
-          {/* Measurement trajectory */}
-          {goal.baseline_value && goal.target_value && latestDataPoint && (() => {
-            const dp = goal.data_points;
-            const currentDp = dp[dp.length - 1];
-            const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
-            const previousDp = dp.length > 2 ? dp[prevIdx] : null;
-
-            return (
-              <div className={`grid gap-3 ${previousDp ? "grid-cols-4" : "grid-cols-3"}`}>
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Baseline <span className="font-normal text-gray-400">{formatDate(goal.start_date)}</span></label>
-                  <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(goal.baseline_value!)}</div>
-                </div>
-                {previousDp && (
-                  <div>
-                    <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Previous <span className="font-normal text-gray-400">{formatDate(previousDp.recorded_at)}</span></label>
-                    <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(previousDp.value)}</div>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-[11px] font-semibold text-indigo-600 mb-0.5">Current <span className="font-normal text-indigo-400">{formatDate(currentDp.recorded_at)}</span></label>
-                  <div className="border border-indigo-200 rounded px-2 py-1 bg-indigo-50 text-xs font-semibold text-indigo-700">{fmtVal(currentDp.value)}</div>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Target <span className="font-normal text-gray-400">{goal.target_date ? formatDate(goal.target_date) : ""}</span></label>
-                  <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(goal.target_value!)}</div>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Chart placeholder */}
-          {goal.data_points.length >= 2 ? (
-            <div className="bg-white rounded-lg px-4 py-6 text-center text-xs text-gray-400 border border-dashed border-gray-200">
-              Auto-generated chart from {goal.data_points.length} data points ({formatDate(goal.data_points[0].recorded_at)} — {formatDate(goal.data_points[goal.data_points.length - 1].recorded_at)})
-            </div>
-          ) : null}
-
-          {/* Status update + Current functional level */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Status Update</label>
-              <select className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option>Continue</option>
-                <option>Met</option>
-                <option>Discontinue</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Current Functional Level</label>
-              <input defaultValue={latestEvent?.current_functional_level || ""} placeholder="Update functional status..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            </div>
-          </div>
-
-          {/* Narrative */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Progress Narrative</label>
-            <textarea rows={2} placeholder="Describe patient's progress toward this goal..." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-          </div>
-        </div>
+        <GoalCardBody goal={goal} showChart={showChart} />
       </div>
       {goal.children.filter((c) => c.current_status === "active" || c.current_status === "met").map((child) => (
-        <GoalChartNew key={child.id} goal={child} depth={depth + 1} />
+        <GoalCardNew key={child.id} goal={child} depth={depth + 1} showChart={showChart} />
       ))}
     </div>
   );
 }
+
+
 
 // ── Switcher formats ──
 const NEW_FORMATS = [
