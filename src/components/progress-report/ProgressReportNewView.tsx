@@ -28,8 +28,37 @@ function ReportFormView({ showChart, mode = "date_range", goals, changedOnForm, 
       <div className="bg-white border border-gray-200 rounded-lg">
         {/* Report details — changes based on collection mode */}
         <div className="px-5 py-4 border-b border-gray-200 space-y-3">
+          {/* Collection type switcher */}
+          <div>
+            {onModeChange ? (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Collection Type</label>
+                <div className="flex items-center gap-2">
+                  {([["date_range", "Date Range"], ["last_visits", "Last N Visits"], ["comparative", "Comparative"]] as const).map(([val, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => onModeChange(val)}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                        mode === val
+                          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                          : "border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Collection Type</label>
+                <div className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 bg-gray-50">{mode === "date_range" ? "Date Range" : mode === "last_visits" ? "Last N Visits" : "Comparative"}</div>
+              </div>
+            )}
+          </div>
+
           {mode === "date_range" && (
-            <div className="grid grid-cols-2 gap-4">
+            <>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Reporting Period Start</label>
                 <input type="date" defaultValue="2026-03-01" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -38,102 +67,79 @@ function ReportFormView({ showChart, mode = "date_range", goals, changedOnForm, 
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Reporting Period End</label>
                 <input type="date" defaultValue="2026-04-08" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
-            </div>
+            </>
           )}
 
           {mode === "last_visits" && (
-            <div className="grid grid-cols-3 gap-4">
+            <>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Number of Visits</label>
                 <input type="number" defaultValue={10} min={1} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Computed Start</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Computed Start Date</label>
                 <div className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500 bg-gray-50">3/5/2026</div>
-                <span className="text-[11px] text-gray-400">Auto-calculated from oldest visit</span>
+                <span className="text-[11px] text-gray-400 mt-0.5 block">Auto-calculated from oldest visit in set</span>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Computed End</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Computed End Date</label>
                 <div className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500 bg-gray-50">4/2/2026</div>
-                <span className="text-[11px] text-gray-400">Auto-calculated from newest visit</span>
+                <span className="text-[11px] text-gray-400 mt-0.5 block">Auto-calculated from newest visit in set</span>
               </div>
-            </div>
+            </>
           )}
 
           {mode === "comparative" && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <span className="text-xs font-semibold text-gray-600 block mb-2">Previous Period</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[11px] text-gray-400 mb-1">Start</label>
-                      <input type="date" defaultValue="2025-12-01" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-gray-400 mb-1">End</label>
-                      <input type="date" defaultValue="2026-02-28" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                    </div>
+            <>
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <span className="text-xs font-semibold text-gray-600 block mb-2">Previous Period</span>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] text-gray-400 mb-1">Start</label>
+                    <input type="date" defaultValue="2025-12-01" className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                   </div>
-                </div>
-                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
-                  <span className="text-xs font-semibold text-indigo-700 block mb-2">Current Period</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[11px] text-gray-400 mb-1">Start</label>
-                      <input type="date" defaultValue="2026-03-01" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-gray-400 mb-1">End</label>
-                      <input type="date" defaultValue="2026-04-08" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                    </div>
+                  <div>
+                    <label className="block text-[11px] text-gray-400 mb-1">End</label>
+                    <input type="date" defaultValue="2026-02-28" className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                   </div>
                 </div>
               </div>
-            </div>
+              <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                <span className="text-xs font-semibold text-indigo-700 block mb-2">Current Period</span>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] text-gray-400 mb-1">Start</label>
+                    <input type="date" defaultValue="2026-03-01" className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-gray-400 mb-1">End</label>
+                    <input type="date" defaultValue="2026-04-08" className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
-          {/* Collection type switcher + Generate */}
-          <div className="flex items-center justify-between">
-            {onModeChange ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">Collection type:</span>
-                {([["date_range", "Date Range"], ["last_visits", "Last N Visits"], ["comparative", "Comparative"]] as const).map(([val, label]) => (
-                  <button
-                    key={val}
-                    onClick={() => onModeChange(val)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                      mode === val
-                        ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                        : "border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <span className="text-xs text-gray-400">Collection type: {mode === "date_range" ? "Date Range" : mode === "last_visits" ? "Last N Visits" : "Comparative"}</span>
-            )}
-            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-              Generate Goals
-            </button>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Discipline</label>
+            <select defaultValue="Speech" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option>Speech</option><option>OT</option><option>PT</option>
+            </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Discipline</label>
-              <select defaultValue="Speech" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option>Speech</option><option>OT</option><option>PT</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Plan of Care</label>
-              <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option>Speech POC - Mar 2026</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Plan of Care</label>
+            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option>Speech POC - Mar 2026</option>
+            </select>
+          </div>
+
+          {/* Generate button */}
+          <div>
+            <button className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              Generate Goals
+            </button>
           </div>
         </div>
 
