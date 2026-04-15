@@ -379,12 +379,14 @@ function ProgressReportComparativeView() {
     (g) => g.discipline === "Speech" && g.goal_type !== "short_term" && (g.current_status === "active" || g.current_status === "met")
   );
 
-  // Mock previous period data (simulated)
+  // Mock previous period data (12/1/2025 - 2/28/2026)
+  // Current period data comes from goal.data_points (3/1/2026 - 4/8/2026)
   const previousData: Record<string, { value: string; sessions: number }> = {
-    "pg-1": { value: "52", sessions: 5 },
-    "pg-3": { value: "48", sessions: 5 },
-    "pg-4": { value: "maximal_assist", sessions: 4 },
-    "pg-5": { value: "2.8", sessions: 3 },
+    "pg-1": { value: "52", sessions: 8 },   // percentage: was 52%, now 72% → +20%
+    "pg-2": { value: "75", sessions: 6 },   // percentage (met STG): was 75%, ended at 92%
+    "pg-3": { value: "48", sessions: 7 },   // percentage: was 48%, now 68% → +20%
+    "pg-4": { value: "maximal_assist", sessions: 6 }, // scale: was maximal_assist, now moderate_assist → improved 2 levels
+    "pg-5": { value: "2.8", sessions: 5 },  // custom (MLU): was 2.8, now 3.1 → +0.3
   };
 
   return (
@@ -445,13 +447,34 @@ function ProgressReportComparativeView() {
                 return d;
               };
 
-              // Calculate change
+              // Calculate change based on measurement type
               let changeText = "";
               let changeColor = "text-gray-500";
-              if (prev && currentVal && goal.measurement_type === "percentage") {
-                const diff = parseInt(currentVal) - parseInt(prev.value);
-                changeText = diff > 0 ? `+${diff}%` : `${diff}%`;
-                changeColor = diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500";
+              if (prev && currentVal) {
+                if (goal.measurement_type === "percentage" || goal.measurement_type === "count" || goal.measurement_type === "duration") {
+                  const diff = parseFloat(currentVal) - parseFloat(prev.value);
+                  const unit = goal.measurement_type === "percentage" ? "%" : goal.measurement_type === "count" ? ` ${(goal.measurement_config.unit as string) || ""}` : "s";
+                  changeText = diff > 0 ? `+${diff}${unit}` : `${diff}${unit}`;
+                  changeColor = diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500";
+                } else if (goal.measurement_type === "custom") {
+                  const diff = parseFloat(currentVal) - parseFloat(prev.value);
+                  const unit = (goal.measurement_config.unit as string) || "";
+                  changeText = diff > 0 ? `+${diff.toFixed(1)} ${unit}` : `${diff.toFixed(1)} ${unit}`;
+                  changeColor = diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500";
+                } else if (goal.measurement_type === "scale" && goal.measurement_config.levels) {
+                  const levels = goal.measurement_config.levels as string[];
+                  const prevIdx = levels.indexOf(prev.value);
+                  const curIdx = levels.indexOf(currentVal);
+                  if (prevIdx >= 0 && curIdx >= 0) {
+                    const diff = curIdx - prevIdx;
+                    changeText = diff > 0 ? `+${diff} level${diff > 1 ? "s" : ""}` : diff < 0 ? `${diff} level${diff < -1 ? "s" : ""}` : "No change";
+                    changeColor = diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500";
+                  }
+                } else if (goal.measurement_type === "binary") {
+                  if (prev.value === "false" && currentVal === "true") { changeText = "Achieved"; changeColor = "text-green-600"; }
+                  else if (prev.value === "true" && currentVal === "false") { changeText = "Regressed"; changeColor = "text-red-600"; }
+                  else { changeText = "No change"; }
+                }
               }
 
               return (
