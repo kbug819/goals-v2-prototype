@@ -7,13 +7,14 @@ import { mockGoals, PatientGoal, GoalStatus } from "@/data/mockData";
 import { formatDate } from "@/utils/formatDate";
 
 // ── Shared report form (Simple + Full use same layout, showChart toggles) ──
-function ReportFormView({ showChart, mode = "date_range", goals, changedOnForm, onStatusChange, onRevert }: {
+function ReportFormView({ showChart, mode = "date_range", goals, changedOnForm, onStatusChange, onRevert, onModeChange }: {
   showChart: boolean;
   mode?: "date_range" | "last_visits" | "comparative";
   goals: PatientGoal[];
   changedOnForm: Set<string>;
   onStatusChange: (id: string, status: GoalStatus, comment: string, currentFunctionalLevel: string | null) => void;
   onRevert: (id: string) => void;
+  onModeChange?: (mode: "date_range" | "last_visits" | "comparative") => void;
 }) {
   const speechGoals = goals.filter((g) => g.discipline === "Speech");
   const visibleTopLevel = speechGoals.filter((g) => g.goal_type !== "short_term" && (g.current_status === "active" || changedOnForm.has(g.id)));
@@ -91,6 +92,36 @@ function ReportFormView({ showChart, mode = "date_range", goals, changedOnForm, 
               </div>
             </div>
           )}
+
+          {/* Collection type switcher + Generate */}
+          <div className="flex items-center justify-between">
+            {onModeChange ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">Collection:</span>
+                {([["date_range", "Date Range"], ["last_visits", "Last N Visits"], ["comparative", "Comparative"]] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => onModeChange(val)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                      mode === val
+                        ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                        : "border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <span className="text-xs text-gray-400">Collection: {mode === "date_range" ? "Date Range" : mode === "last_visits" ? "Last N Visits" : "Comparative"}</span>
+            )}
+            {mode !== "last_visits" && (
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                Generate Goals
+              </button>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -359,12 +390,11 @@ function PRGoalCard({ goal, childGoals, showChart = false, onStatusChange, onRev
 const NEW_FORMATS = [
   { value: "default", label: "Simple" },
   { value: "charts", label: "Full" },
-  { value: "last_visits", label: "Last N Visits" },
-  { value: "comparative", label: "Comparative" },
 ];
 
 export default function ProgressReportNewView() {
   const [format, setFormat] = useState("default");
+  const [collectionMode, setCollectionMode] = useState<"date_range" | "last_visits" | "comparative">("date_range");
 
   // Goal state management (same pattern as POC/Eval CustomFormView)
   const [goals, setGoals] = useState<PatientGoal[]>(() => {
@@ -460,12 +490,13 @@ export default function ProgressReportNewView() {
       </div>
 
       <ReportFormView
-        showChart={format === "charts" || format === "last_visits" || format === "comparative"}
-        mode={format === "last_visits" ? "last_visits" : format === "comparative" ? "comparative" : "date_range"}
+        showChart={format === "charts"}
+        mode={collectionMode}
         goals={goals}
         changedOnForm={changedOnForm}
         onStatusChange={handleStatusChange}
         onRevert={handleRevertStatus}
+        onModeChange={setCollectionMode}
       />
 
       {/* Prototype badge */}
