@@ -257,8 +257,9 @@ export default function PRComponentSetupView() {
         <span className="text-xs bg-white border border-slate-200 rounded px-3 py-1.5 text-slate-600">Custom Form Editor</span>
       </div>
 
+      <div className="flex gap-0">
       {/* Form canvas - matches Ambiki custom form editor layout */}
-      <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg">
+      <div className="flex-1 bg-white border border-gray-200 border-t-0 rounded-bl-lg">
 
         {/* Row: Patient Info (smart component) */}
         <FormEditorRow type="Smart Component" onGear={() => {}}>
@@ -363,6 +364,31 @@ export default function PRComponentSetupView() {
           </select>
         </FormEditorRow>
 
+      </div>
+
+      {/* Right: Available components */}
+      <div className="w-56 bg-gray-50 border border-gray-200 border-t-0 border-l-0 rounded-br-lg p-4">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Goal Components</h3>
+        <button
+          onClick={() => setOpenConfig(true)}
+          className="w-full text-left px-3 py-2.5 bg-white border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50/50 transition-colors group"
+        >
+          <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-700">Goal Progress</span>
+          <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">Configurable goal review — toggle charts, trajectory, status updates, and narratives</p>
+        </button>
+
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Standard</h3>
+          <div className="space-y-1.5 text-xs text-gray-400">
+            <div className="px-2 py-1">Patient info</div>
+            <div className="px-2 py-1">Reporting period</div>
+            <div className="px-2 py-1">Rich text</div>
+            <div className="px-2 py-1">Diagnosis codes</div>
+            <div className="px-2 py-1">Prognosis</div>
+            <div className="px-2 py-1">Signature</div>
+          </div>
+        </div>
+      </div>
       </div>
 
       {/* Config modals */}
