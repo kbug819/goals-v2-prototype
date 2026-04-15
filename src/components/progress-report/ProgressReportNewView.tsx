@@ -97,7 +97,7 @@ function ReportFormView({ showChart, mode = "date_range", goals, changedOnForm, 
           <div className="flex items-center justify-between">
             {onModeChange ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">Collection:</span>
+                <span className="text-xs text-gray-400">Collection type:</span>
                 {([["date_range", "Date Range"], ["last_visits", "Last N Visits"], ["comparative", "Comparative"]] as const).map(([val, label]) => (
                   <button
                     key={val}
@@ -113,14 +113,12 @@ function ReportFormView({ showChart, mode = "date_range", goals, changedOnForm, 
                 ))}
               </div>
             ) : (
-              <span className="text-xs text-gray-400">Collection: {mode === "date_range" ? "Date Range" : mode === "last_visits" ? "Last N Visits" : "Comparative"}</span>
+              <span className="text-xs text-gray-400">Collection type: {mode === "date_range" ? "Date Range" : mode === "last_visits" ? "Last N Visits" : "Comparative"}</span>
             )}
-            {mode !== "last_visits" && (
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                Generate Goals
-              </button>
-            )}
+            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              Generate Goals
+            </button>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -467,7 +465,7 @@ export default function ProgressReportNewView() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
-        description="This page previews progress report creation. 'Simple' shows the POC/Eval-style goal card. 'Full' adds charts. 'Last N Visits' shows the visit-count collection mode. 'Comparative' shows two date ranges for side-by-side comparison. All views share the same goal component with interactive status actions and cascade."
+        description="This page previews progress report creation. 'Simple' shows the POC/Eval-style goal card. 'Full' adds charts. The collection type switcher (Date Range / Last N Visits / Comparative) controls how session data is gathered. The collection type option is only available to therapists if enabled in the Custom Form Setup settings. Otherwise, the default collection type set by the admin is used."
         todos={[]}
       />
 

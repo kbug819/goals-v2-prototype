@@ -335,6 +335,7 @@ function ProgressReportChartsView() {
 const SHOW_FORMATS = [
   { value: "default", label: "Simple" },
   { value: "charts", label: "Full" },
+  { value: "comparative", label: "Comparative" },
 ];
 
 export default function ProgressReportShowView() {
@@ -367,6 +368,238 @@ export default function ProgressReportShowView() {
 
       {showFormat === "default" && <ProgressReportDefaultView />}
       {showFormat === "charts" && <ProgressReportChartsView />}
+      {showFormat === "comparative" && <ProgressReportComparativeView />}
+    </div>
+  );
+}
+
+// ── Comparative view — Previous vs Current period side-by-side ──
+function ProgressReportComparativeView() {
+  const speechGoals = mockGoals.filter(
+    (g) => g.discipline === "Speech" && g.goal_type !== "short_term" && (g.current_status === "active" || g.current_status === "met")
+  );
+
+  // Mock previous period data (simulated)
+  const previousData: Record<string, { value: string; sessions: number }> = {
+    "pg-1": { value: "52", sessions: 5 },
+    "pg-3": { value: "48", sessions: 5 },
+    "pg-4": { value: "maximal_assist", sessions: 4 },
+    "pg-5": { value: "2.8", sessions: 3 },
+  };
+
+  return (
+    <div>
+      {/* Report header */}
+      <div className="bg-slate-700 text-white rounded-t-lg px-5 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span className="text-sm font-medium">Comparative Progress Report - {mockPatient.name}</span>
+        </div>
+        <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">Signed 4/8/2026</span>
+      </div>
+
+      <div className="bg-white border border-t-0 border-gray-200 rounded-b-lg">
+        {/* Patient info */}
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Comparative Speech Therapy Progress Report</h2>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div><span className="text-xs font-semibold text-gray-500">Patient</span><p className="text-gray-700">{mockPatient.name}</p></div>
+            <div><span className="text-xs font-semibold text-gray-500">DOB</span><p className="text-gray-700">6/15/2019</p></div>
+            <div><span className="text-xs font-semibold text-gray-500">Therapist</span><p className="text-gray-700">Sam Therapist</p></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 mt-3">
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <span className="text-xs font-semibold text-gray-500">Previous Period</span>
+              <p className="text-sm text-gray-700">12/1/2025 - 2/28/2026</p>
+            </div>
+            <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+              <span className="text-xs font-semibold text-indigo-600">Current Period</span>
+              <p className="text-sm text-gray-700">3/1/2026 - 4/8/2026</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-800 mb-2">Summary</h3>
+          <p className="text-sm text-gray-600 leading-relaxed">Patient has made good overall progress compared to the previous reporting period. Articulation accuracy improved from 52% to 72%. Expressive language moved from maximal to moderate assist. MLU increased from 2.8 to 3.1.</p>
+        </div>
+
+        {/* Comparative goal cards */}
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">Goal Progress — Comparative</h3>
+          <div className="space-y-4">
+            {speechGoals.map((goal) => {
+              const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+              const latestDp = goal.data_points[goal.data_points.length - 1];
+              const prev = previousData[goal.id];
+              const currentVal = latestDp ? latestDp.value : null;
+
+              const fmtVal = (v: string) => {
+                const d = v.replace(/_/g, " ");
+                if (goal.measurement_type === "percentage") return `${d}%`;
+                if (goal.measurement_type === "duration") return `${d} ${(goal.measurement_config.unit as string) || "sec"}`;
+                if (goal.measurement_type === "count") return `${d} ${(goal.measurement_config.unit as string) || ""}`;
+                return d;
+              };
+
+              // Calculate change
+              let changeText = "";
+              let changeColor = "text-gray-500";
+              if (prev && currentVal && goal.measurement_type === "percentage") {
+                const diff = parseInt(currentVal) - parseInt(prev.value);
+                changeText = diff > 0 ? `+${diff}%` : `${diff}%`;
+                changeColor = diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500";
+              }
+
+              return (
+                <div key={goal.id}>
+                  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-indigo-100/70">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
+                        <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {changeText && <span className={`text-sm font-bold ${changeColor}`}>{changeText}</span>}
+                        <span className="text-sm font-medium text-gray-700">{goal.current_status.charAt(0).toUpperCase() + goal.current_status.slice(1)}</span>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50/60 px-4 py-3 space-y-3">
+                      <p className="text-sm text-gray-700">{goal.goal_text}</p>
+
+                      {/* Comparative columns */}
+                      {goal.baseline_value && goal.target_value && (
+                        <div className="grid grid-cols-5 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Baseline</label>
+                            <div className="border border-gray-200 rounded px-2 py-1.5 bg-white text-sm text-gray-600">{fmtVal(goal.baseline_value)}</div>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Previous</label>
+                            <div className="border border-gray-300 rounded px-2 py-1.5 bg-gray-100 text-sm text-gray-500">{prev ? fmtVal(prev.value) : "—"}</div>
+                            {prev && <span className="text-[10px] text-gray-400">{prev.sessions} sessions</span>}
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-indigo-600 mb-0.5">Current</label>
+                            <div className="border border-indigo-200 rounded px-2 py-1.5 bg-indigo-50 text-sm font-semibold text-indigo-700">{currentVal ? fmtVal(currentVal) : "—"}</div>
+                            {latestDp && <span className="text-[10px] text-gray-400">{goal.data_points.length} sessions</span>}
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Change</label>
+                            <div className={`border rounded px-2 py-1.5 text-sm font-bold ${
+                              changeColor === "text-green-600" ? "border-green-200 bg-green-50 text-green-700" :
+                              changeColor === "text-red-600" ? "border-red-200 bg-red-50 text-red-700" :
+                              "border-gray-200 bg-white text-gray-500"
+                            }`}>{changeText || "—"}</div>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Target</label>
+                            <div className="border border-gray-200 rounded px-2 py-1.5 bg-white text-sm text-gray-600">{fmtVal(goal.target_value)}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Narrative */}
+                      <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                        <span className="text-[11px] font-semibold text-gray-500 block">Progress Narrative</span>
+                        <span className="text-sm text-gray-600 italic">
+                          {goal.id === "pg-1" ? "Improved from 52% to 72% — strong response to visual cues and self-monitoring strategies." :
+                           goal.id === "pg-4" ? "Moved from maximal to moderate assist. Beginning to use sentence starters independently." :
+                           goal.id === "pg-5" ? "MLU increased from 2.8 to 3.1. Using more descriptors in spontaneous speech." :
+                           "Progressing steadily toward target."}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Children */}
+                  {goal.children.filter((c) => c.current_status === "active" || c.current_status === "met").map((child) => {
+                    const childPrev = previousData[child.id];
+                    const childDp = child.data_points[child.data_points.length - 1];
+                    let childChange = "";
+                    let childChangeColor = "text-gray-500";
+                    if (childPrev && childDp && child.measurement_type === "percentage") {
+                      const diff = parseInt(childDp.value) - parseInt(childPrev.value);
+                      childChange = diff > 0 ? `+${diff}%` : `${diff}%`;
+                      childChangeColor = diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500";
+                    }
+                    return (
+                      <div key={child.id} className="ml-8 mt-2">
+                        <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>
+                        <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                          <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm font-bold text-indigo-900">{child.version_a}.{child.version_b}.{child.version_c} Short Term Goal</span>
+                              <span className="text-xs font-medium text-gray-500 capitalize">{child.measurement_type}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {childChange && <span className={`text-sm font-bold ${childChangeColor}`}>{childChange}</span>}
+                              <span className="text-xs font-medium text-gray-600">{child.current_status.charAt(0).toUpperCase() + child.current_status.slice(1)}</span>
+                            </div>
+                          </div>
+                          <div className="bg-gray-50/60 px-4 py-3">
+                            <p className="text-sm text-gray-600">{child.goal_text}</p>
+                            {child.baseline_value && child.target_value && (
+                              <div className="grid grid-cols-5 gap-2 mt-2">
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Baseline</label>
+                                  <div className="border border-gray-200 rounded px-1.5 py-1 bg-white text-xs text-gray-600">{formatValue(child.baseline_value, child)}</div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Previous</label>
+                                  <div className="border border-gray-300 rounded px-1.5 py-1 bg-gray-100 text-xs text-gray-500">{childPrev ? formatValue(childPrev.value, child) : "—"}</div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-indigo-600 mb-0.5">Current</label>
+                                  <div className="border border-indigo-200 rounded px-1.5 py-1 bg-indigo-50 text-xs font-semibold text-indigo-700">{childDp ? formatValue(childDp.value, child) : "—"}</div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Change</label>
+                                  <div className={`border rounded px-1.5 py-1 text-xs font-bold ${
+                                    childChangeColor === "text-green-600" ? "border-green-200 bg-green-50 text-green-700" :
+                                    childChangeColor === "text-red-600" ? "border-red-200 bg-red-50 text-red-700" :
+                                    "border-gray-200 bg-white text-gray-500"
+                                  }`}>{childChange || "—"}</div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Target</label>
+                                  <div className="border border-gray-200 rounded px-1.5 py-1 bg-white text-xs text-gray-600">{formatValue(child.target_value, child)}</div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Signature */}
+        <div className="px-5 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700">Sam Therapist, CCC-SLP</p>
+              <p className="text-xs text-gray-400">Signed electronically on 4/8/2026 at 4:30 PM CDT</p>
+            </div>
+            <span className="text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded-full px-3 py-1">Signed</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Prototype badge */}
+      <div className="mt-8 text-center">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-xs text-gray-500">
+          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          Goals V2 Prototype — Progress Report Comparative Show
+        </span>
+      </div>
     </div>
   );
 }
