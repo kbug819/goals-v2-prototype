@@ -247,13 +247,40 @@ const GOAL_COMPONENTS: { name: string; slug: string; description: string; config
   { name: "Goal Custom Components", slug: "smart-goal-custom-collection", description: "Therapist adds custom components per goal at fill time", config: "goal_custom", future: true },
 ];
 
+function FormEditorRow({ type, children, highlight, onGear }: { type: string; children: React.ReactNode; highlight?: boolean; onGear?: () => void }) {
+  return (
+    <div className={`border-b border-gray-200 ${highlight ? "bg-blue-50/30" : ""}`}>
+      <div className="flex items-center justify-between px-4 py-1 bg-slate-100/80 border-b border-slate-200/50">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <button onClick={onGear} className="text-slate-400 hover:text-slate-600">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0" />
+            </svg>
+          </button>
+          <div className="grid grid-cols-3 gap-0.5">{[...Array(6)].map((_, i) => <div key={i} className="w-1 h-1 bg-slate-300 rounded-full" />)}</div>
+          <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+          <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          <span className="font-medium">{type}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="text-xs text-slate-500 border border-slate-300 rounded px-2 py-0.5 hover:bg-slate-200 flex items-center gap-1">
+            <span className="text-[10px]">C</span> Clone
+          </button>
+          <button className="text-slate-400 hover:text-red-500">&times;</button>
+        </div>
+      </div>
+      <div className="px-6 py-4">{children}</div>
+    </div>
+  );
+}
+
 export default function ComponentSetupView() {
   const [openConfig, setOpenConfig] = useState<ComponentConfig>(null);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
-        description="This page previews what the Custom Form Editor looks like when setting up visit note goal components. Click a component to see its configuration options. All of these use the existing custom form editor pattern (Label, Label hint, Options checkboxes) — no framework changes needed."
+        description="This page previews what the Custom Form Editor looks like when setting up visit note goal components. Click a goal component to see its configuration options."
         todos={[]}
       />
 
@@ -263,73 +290,158 @@ export default function ComponentSetupView() {
           <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
           </svg>
-          <span className="text-lg font-semibold text-slate-800">Visit Note — Goal Components Setup</span>
+          <span className="text-lg font-semibold text-slate-800">Visit Note — Goal Components</span>
+          <button className="text-slate-400 hover:text-slate-600 transition-colors" title="Form settings">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
         </div>
-        <span className="text-xs bg-white border border-slate-200 rounded px-3 py-1.5 text-slate-600">Custom Form Editor</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs bg-white border border-slate-200 rounded px-3 py-1.5 text-slate-600">Visit note</span>
+          <span className="text-xs bg-white border border-slate-200 rounded px-3 py-1.5 text-slate-600">Custom Form Editor</span>
+        </div>
       </div>
 
       <div className="flex gap-0">
         {/* Left: Form canvas */}
-        <div className="flex-1 bg-white border border-gray-200 border-t-0 rounded-bl-lg min-h-[500px]">
-          <div className="divide-y divide-gray-200">
-            {/* Existing standard components */}
-            <div className="px-5 py-3 flex items-center gap-3">
-              <div className="grid grid-cols-3 gap-0.5">{[...Array(6)].map((_, i) => <div key={i} className="w-1.5 h-1.5 bg-slate-300 rounded-full" />)}</div>
-              <div>
-                <span className="text-sm text-gray-500">Clinical Note</span>
-                <span className="text-xs text-gray-400 ml-2">Rich text</span>
-              </div>
+        <div className="flex-1 bg-white border border-gray-200 border-t-0 rounded-bl-lg">
+
+          {/* Row: Clinical Note */}
+          <FormEditorRow type="Text Area">
+            <label className="block text-sm font-semibold text-gray-800">Clinical Note:</label>
+            <textarea rows={2} placeholder="Write your clinical note here..." className="w-full border border-gray-300 rounded px-3 py-2 text-sm mt-1 resize-none" />
+          </FormEditorRow>
+
+          {/* Row: Session Checklist */}
+          <FormEditorRow type="Smart Component" highlight onGear={() => setOpenConfig("goal_list")}>
+            <div className="mb-2">
+              <span className="text-sm font-semibold text-gray-800">Session Checklist</span>
+              <span className="text-xs text-gray-400 ml-2 font-mono">smart-goals-session-checklist</span>
             </div>
-
-            {/* Goal components on canvas */}
-            {GOAL_COMPONENTS.filter((c) => !c.future).map((comp) => (
-              <div key={comp.config} className="px-5 py-4 bg-blue-50/30 cursor-pointer hover:bg-blue-50/60 transition-colors" onClick={() => setOpenConfig(comp.config)}>
-                <div className="flex items-start gap-3">
-                  <div className="flex flex-col items-center gap-1 pt-1">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0" />
-                    </svg>
-                    <div className="grid grid-cols-3 gap-0.5">{[...Array(6)].map((_, i) => <div key={i} className="w-1.5 h-1.5 bg-slate-300 rounded-full" />)}</div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-indigo-700 font-semibold">{comp.name}</span>
-                        <span className="text-xs text-gray-400 font-mono">{comp.slug}</span>
-                      </div>
-                      <span className="text-gray-400 cursor-pointer">&times;</span>
-                    </div>
-                    <p className="text-xs text-gray-500">{comp.description}</p>
-
-                    {/* Mini preview */}
-                    <div className="mt-2 space-y-1.5">
-                      <div className="flex items-center gap-2 border border-dashed border-gray-300 rounded px-3 py-2 bg-white">
-                        {comp.config === "goal_list" && <input type="checkbox" disabled className="w-3.5 h-3.5 rounded border-gray-300" />}
-                        <span className="text-xs font-bold text-indigo-600">LTG 1.0.0</span>
-                        <span className="text-xs text-gray-400 truncate">Patient will improve articulation of /r/ sound...</span>
-                        {comp.config === "goal_progress" && <span className="ml-auto text-[10px] text-gray-400">Measurement | Activity | Note</span>}
-                        {comp.config === "goal_admin" && <span className="ml-auto text-[10px] text-gray-400">Admin fields</span>}
-                      </div>
-                      <div className="ml-5 flex items-center gap-2 border border-dashed border-gray-200 rounded px-3 py-1.5 bg-white">
-                        {comp.config === "goal_list" && <input type="checkbox" disabled className="w-3.5 h-3.5 rounded border-gray-300" />}
-                        <span className="text-xs font-bold text-indigo-500">STG 1.2.0</span>
-                        <span className="text-xs text-gray-400 truncate">Produce /r/ in final position...</span>
-                      </div>
-                    </div>
+            <div className="border border-dashed border-indigo-200 rounded-lg p-3 bg-indigo-50/20 space-y-2">
+              <div className="rounded overflow-hidden border border-gray-200">
+                <label className="flex items-center gap-3 px-3 py-1.5 bg-gray-100/80 cursor-pointer">
+                  <input type="checkbox" disabled className="w-3.5 h-3.5 rounded border-gray-300" />
+                  <span className="text-[11px] font-bold text-gray-700">1.0.0 Long Term Goal</span>
+                  <span className="text-[10px] text-gray-400">percentage</span>
+                </label>
+                <div className="bg-gray-50/60 px-3 py-2">
+                  <p className="text-[10px] text-gray-400">Patient will improve articulation of /r/ sound...</p>
+                  <div className="grid grid-cols-2 gap-1 mt-1">
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Current Functional Level</span></div>
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Session Notes</span></div>
                   </div>
                 </div>
               </div>
-            ))}
-
-            {/* Standard trailing components */}
-            <div className="px-5 py-3 flex items-center gap-3">
-              <div className="grid grid-cols-3 gap-0.5">{[...Array(6)].map((_, i) => <div key={i} className="w-1.5 h-1.5 bg-slate-300 rounded-full" />)}</div>
-              <div>
-                <span className="text-sm text-gray-500">Save / Sign Button</span>
-                <span className="text-xs text-gray-400 ml-2">System</span>
+              <div className="ml-4 rounded overflow-hidden border border-gray-200">
+                <label className="flex items-center gap-3 px-3 py-1 bg-gray-100/80 cursor-pointer">
+                  <input type="checkbox" disabled className="w-3.5 h-3.5 rounded border-gray-300" />
+                  <span className="text-[10px] text-gray-400">&#8627;</span>
+                  <span className="text-[10px] font-bold text-gray-600">1.2.0 Short Term Goal</span>
+                </label>
               </div>
             </div>
-          </div>
+          </FormEditorRow>
+
+          {/* Row: Goal Data Collection */}
+          <FormEditorRow type="Smart Component" highlight onGear={() => setOpenConfig("goal_progress")}>
+            <div className="mb-2">
+              <span className="text-sm font-semibold text-gray-800">Goal Data Collection</span>
+              <span className="text-xs text-gray-400 ml-2 font-mono">smart-goal-data-collection</span>
+            </div>
+            <div className="border border-dashed border-indigo-200 rounded-lg p-3 bg-indigo-50/20 space-y-2">
+              <div className="rounded overflow-hidden border border-gray-200">
+                <div className="bg-indigo-100/70 px-3 py-1.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-indigo-900">1.0.0 Long Term Goal</span>
+                    <span className="text-[10px] text-gray-500">percentage</span>
+                  </div>
+                  <span className="text-[10px] text-gray-600">Active</span>
+                </div>
+                <div className="bg-gray-50/60 px-3 py-2 space-y-1.5">
+                  <p className="text-[10px] text-gray-400">Patient will improve articulation of /r/ sound...</p>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[{l:"Baseline",v:"45%"},{l:"Previous",v:"52%"},{l:"Current",v:"72%",hl:true},{l:"Target",v:"90%"}].map((c) => (
+                      <div key={c.l}>
+                        <div className={`text-[9px] font-semibold ${c.hl ? "text-indigo-600" : "text-gray-500"}`}>{c.l}</div>
+                        <div className={`border rounded px-1.5 py-0.5 text-[10px] ${c.hl ? "border-indigo-200 bg-indigo-50 font-semibold text-indigo-700" : "border-gray-200 bg-white text-gray-600"}`}>{c.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Measurement</span></div>
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Activity</span></div>
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Note</span></div>
+                  </div>
+                </div>
+              </div>
+              <div className="ml-4 rounded overflow-hidden border border-gray-200">
+                <div className="bg-indigo-100/70 px-3 py-1 flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400">&#8627;</span>
+                  <span className="text-[10px] font-bold text-indigo-800">1.2.0 Short Term Goal</span>
+                </div>
+              </div>
+            </div>
+          </FormEditorRow>
+
+          {/* Row: Goal Admin Components */}
+          <FormEditorRow type="Smart Component" highlight onGear={() => setOpenConfig("goal_admin")}>
+            <div className="mb-2">
+              <span className="text-sm font-semibold text-gray-800">Goal Admin Components</span>
+              <span className="text-xs text-gray-400 ml-2 font-mono">smart-goal-admin-collection</span>
+            </div>
+            <div className="border border-dashed border-indigo-200 rounded-lg p-3 bg-indigo-50/20 space-y-2">
+              <div className="rounded overflow-hidden border border-gray-200">
+                <div className="bg-indigo-100/70 px-3 py-1.5 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-indigo-900">1.0.0 Long Term Goal</span>
+                  <span className="text-[10px] text-gray-600">Active</span>
+                </div>
+                <div className="bg-gray-50/60 px-3 py-2 space-y-1">
+                  <p className="text-[10px] text-gray-400">Patient will improve articulation of /r/ sound...</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Progress Status</span></div>
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Session Notes</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </FormEditorRow>
+
+          {/* Row: Goal Custom Components (future) */}
+          <FormEditorRow type="Smart Component" highlight onGear={() => setOpenConfig("goal_custom")}>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray-800">Goal Custom Components</span>
+              <span className="text-xs text-gray-400 font-mono">smart-goal-custom-collection</span>
+              <span className="text-[10px] text-violet-500 bg-violet-100 rounded px-1.5 py-0.5 font-medium">Future</span>
+            </div>
+            <div className="border border-dashed border-violet-200 rounded-lg p-3 bg-violet-50/20 space-y-2">
+              <div className="rounded overflow-hidden border border-gray-200">
+                <div className="bg-indigo-100/70 px-3 py-1.5 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-indigo-900">1.0.0 Long Term Goal</span>
+                  <span className="text-[10px] text-gray-600">Active</span>
+                </div>
+                <div className="bg-gray-50/60 px-3 py-2 space-y-1">
+                  <p className="text-[10px] text-gray-400">Patient will improve articulation of /r/ sound...</p>
+                  <div className="space-y-1">
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Trials: 29/40 (73%)</span></div>
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Notes: Responding well to visual cues...</span></div>
+                    <div className="border border-gray-200 rounded px-1.5 py-0.5 bg-white"><span className="text-[9px] text-gray-400">Rating: 4 / 5</span></div>
+                  </div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-[9px] text-violet-500 border border-violet-200 rounded px-1.5 py-0.5 bg-violet-50">+ Add component</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </FormEditorRow>
+
+          {/* Row: Save */}
+          <FormEditorRow type="System">
+            <button disabled className="w-full px-4 py-2 text-sm font-medium text-white bg-gray-300 rounded-lg cursor-not-allowed">Save Visit Note</button>
+          </FormEditorRow>
+
         </div>
 
         {/* Right: Available components */}
