@@ -264,36 +264,6 @@ function GoalDataShowCard({ goal }: { goal: PatientGoal }) {
       <div className="bg-gray-50/60 px-4 py-3 space-y-3">
         <p className="text-sm text-gray-600">{goal.goal_text}</p>
 
-        {/* Measurement trajectory */}
-        {goal.baseline_value && goal.target_value && goal.data_points.length > 0 && (() => {
-          const dp = goal.data_points;
-          const currentDp = dp[dp.length - 1];
-          const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
-          const previousDp = dp.length > 2 ? dp[prevIdx] : null;
-          return (
-            <div className={`grid gap-3 ${previousDp ? "grid-cols-4" : "grid-cols-3"}`}>
-              <div>
-                <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Baseline <span className="font-normal text-gray-400">{formatDate(goal.start_date)}</span></label>
-                <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatValue(goal.baseline_value, goal)}</div>
-              </div>
-              {previousDp && (
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Previous <span className="font-normal text-gray-400">{formatDate(previousDp.recorded_at)}</span></label>
-                  <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatValue(previousDp.value, goal)}</div>
-                </div>
-              )}
-              <div>
-                <label className="block text-[11px] font-semibold text-indigo-600 mb-0.5">Current <span className="font-normal text-indigo-400">{formatDate(currentDp.recorded_at)}</span></label>
-                <div className="border border-indigo-200 rounded px-2 py-1 bg-indigo-50 text-xs font-semibold text-indigo-700">{formatValue(currentDp.value, goal)}</div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Target <span className="font-normal text-gray-400">{goal.target_date ? formatDate(goal.target_date) : ""}</span></label>
-                <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{formatValue(goal.target_value, goal)}</div>
-              </div>
-            </div>
-          );
-        })()}
-
         {/* Today's data */}
         {latestDp && (
           <div className="grid grid-cols-3 gap-3">
