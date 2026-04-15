@@ -4,7 +4,7 @@ type Project = "vncf" | "goals_v2" | "progress_reports";
 
 const PROJECT_TABS: Record<Project, string[]> = {
   vncf: ["Custom Form Creation", "Visit Note - New", "Visit Note - Show"],
-  goals_v2: ["Goal Tab", "POC / Eval - New", "Custom Form Setup", "Visit Note - New (WIP)", "Visit Note - Show (WIP)"],
+  goals_v2: ["Goal Tab", "POC / Eval - New", "Custom Form Setup", "Visit Note - New", "Visit Note - Show"],
   progress_reports: ["Progress Report - New", "Progress Report - Show", "Custom Form Setup"],
 };
 
@@ -28,16 +28,6 @@ export default function TopNav({
           <span className="text-sm font-semibold text-gray-700">Project:</span>
           <div className="flex items-center bg-gray-200 rounded-lg p-1">
             <button
-              onClick={() => onProjectChange("vncf")}
-              className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
-                project === "vncf"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Visit Note Custom Form
-            </button>
-            <button
               onClick={() => onProjectChange("goals_v2")}
               className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
                 project === "goals_v2"
@@ -55,7 +45,17 @@ export default function TopNav({
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              Progress Reports w/ Goals V2
+              Progress Reports
+            </button>
+            <button
+              onClick={() => onProjectChange("vncf")}
+              className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                project === "vncf"
+                  ? "bg-white text-gray-700 shadow-sm"
+                  : "text-gray-400 hover:text-gray-500"
+              }`}
+            >
+              Visit Note Custom Form (WIP)
             </button>
           </div>
         </div>

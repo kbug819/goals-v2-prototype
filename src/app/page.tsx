@@ -94,8 +94,8 @@ function GoalsView() {
 }
 
 export default function Home() {
-  const [project, setProject] = useState<"vncf" | "goals_v2" | "progress_reports">("vncf");
-  const [activeTab, setActiveTab] = useState("Custom Form Creation");
+  const [project, setProject] = useState<"vncf" | "goals_v2" | "progress_reports">("goals_v2");
+  const [activeTab, setActiveTab] = useState("Goal Tab");
 
   function handleProjectChange(newProject: "vncf" | "goals_v2" | "progress_reports") {
     setProject(newProject);
@@ -117,9 +117,7 @@ export default function Home() {
       {activeTab === "Goal Tab" && <GoalsView />}
       {activeTab === "POC / Eval - New" && <CustomFormView />}
       {activeTab === "Visit Note - New" && <VisitNoteNewView project={project} />}
-      {activeTab === "Visit Note - New (WIP)" && <VisitNoteNewView project={project} />}
       {activeTab === "Visit Note - Show" && <VisitNoteView project={project} />}
-      {activeTab === "Visit Note - Show (WIP)" && <VisitNoteView project={project} />}
       {activeTab === "Custom Form Setup" && project === "goals_v2" && <ComponentSetupView />}
       {activeTab === "Custom Form Setup" && project === "progress_reports" && <PRComponentSetupView />}
       {activeTab === "Progress Report - New" && <ProgressReportNewView />}
