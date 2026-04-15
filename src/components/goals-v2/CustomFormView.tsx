@@ -187,11 +187,11 @@ function ActiveGoalCard({
   return (
     <div className={`${isChild ? "ml-8 mt-2" : ""}`}>
       {isChild && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
-      <div className="rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
+      <div className={`rounded-lg overflow-hidden border shadow-sm ${goal.current_status === "pending" ? "border-amber-200" : "border-gray-200"} bg-white`}>
         {/* Header bar */}
-        <div className="flex items-center justify-between px-4 py-2.5 bg-indigo-100/70">
+        <div className={`flex items-center justify-between px-4 py-2.5 ${goal.current_status === "pending" ? "bg-amber-100/80" : "bg-indigo-100/70"}`}>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-indigo-900">
+            <span className={`text-sm font-bold ${goal.current_status === "pending" ? "text-amber-900" : "text-indigo-900"}`}>
               {goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}
             </span>
             <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
