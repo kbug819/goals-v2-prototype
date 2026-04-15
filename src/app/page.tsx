@@ -5,6 +5,7 @@ import TopNav from "@/components/shared/TopNav";
 import GoalCard from "@/components/goals-v2/GoalCard";
 import GoalsFilter from "@/components/goals-v2/GoalsFilter";
 import CustomFormView from "@/components/goals-v2/CustomFormView";
+import CustomFormShowView from "@/components/goals-v2/CustomFormShowView";
 import ComponentSetupView from "@/components/goals-v2/ComponentSetupView";
 import CustomFormCreationView from "@/components/visit-note/CustomFormCreationView";
 import VisitNoteNewView from "@/components/visit-note/VisitNoteNewView";
@@ -116,6 +117,7 @@ export default function Home() {
       {activeTab === "Custom Form Creation" && <CustomFormCreationView />}
       {activeTab === "Goal Tab" && <GoalsView />}
       {activeTab === "POC / Eval - New" && <CustomFormView />}
+      {activeTab === "POC / Eval - Show" && <CustomFormShowView />}
       {activeTab === "Visit Note - New" && <VisitNoteNewView project={project} />}
       {activeTab === "Visit Note - Show" && <VisitNoteView project={project} />}
       {activeTab === "Custom Form Setup" && project === "goals_v2" && <ComponentSetupView />}
