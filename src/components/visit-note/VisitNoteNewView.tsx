@@ -7,7 +7,7 @@ import { V1_MOCK_GOALS, PROMPTING_LEVELS, PROMPTING_TYPES } from "@/data/v1MockD
 import DevNote from "@/components/shared/DevNote";
 import { formatDate } from "@/utils/formatDate";
 
-type NoteFormat = "soap" | "freetext" | "dap" | "freetext_v1goallist" | "freetext_v1goalprogress" | "freetext_v1goaladmin" | "freetext_v1goalcustom" | "freetext_goals" | "freetext_goallist" | "freetext_v2goaladmin" | "freetext_v2goalcustom";
+type NoteFormat = "soap" | "freetext" | "dap" | "freetext_v1goallist" | "freetext_v1goalprogress" | "freetext_v1goaladmin" | "freetext_v1goalcustom" | "freetext_goals" | "freetext_goallist" | "freetext_v2goaladmin" | "freetext_v2goalcustom" | "integrated_soap";
 
 const NOTE_FORMATS: { value: NoteFormat; label: string; shortLabel: string; description: string }[] = [
   { value: "soap", label: "Visit Note - SOAP", shortLabel: "SOAP", description: "Subjective, Objective, Assessment, Plan" },
@@ -21,6 +21,7 @@ const NOTE_FORMATS: { value: NoteFormat; label: string; shortLabel: string; desc
   { value: "freetext_goallist", label: "Goal Checklist (smart-goals-session-checklist)", shortLabel: "Goal Checklist", description: "Lightweight goal checklist with notes per goal" },
   { value: "freetext_v2goaladmin", label: "Goal Admin (smart-goal-admin-collection)", shortLabel: "Goal Admin", description: "Admin-configured components per goal — org sets up fields in Custom Form Editor" },
   { value: "freetext_v2goalcustom", label: "Goal Custom (smart-goal-custom-collection)", shortLabel: "Goal Custom", description: "Therapist adds custom components per goal at fill time" },
+  { value: "integrated_soap", label: "Integrated SOAP (smart-goals-soap-objective)", shortLabel: "Integrated SOAP", description: "SOAP format with goals replacing the Objective section — data collection inline" },
 ];
 
 const DISCIPLINES = ["Speech", "OT", "PT"];
@@ -1169,6 +1170,161 @@ function FreeTextGoalList() {
   );
 }
 
+function IntegratedSoap() {
+  const [updates, setUpdates] = useState<Record<string, { value: string; activity: string; note: string }>>({});
+
+  const speechGoals: PatientGoal[] = [];
+  for (const g of mockGoals) {
+    if (g.discipline === "Speech" && g.current_status === "active") {
+      speechGoals.push(g);
+      for (const c of g.children) {
+        if (c.current_status === "active") speechGoals.push(c);
+      }
+    }
+  }
+
+  function updateField(goalId: string, field: "value" | "activity" | "note", val: string) {
+    setUpdates({ ...updates, [goalId]: { ...updates[goalId], [field]: val } });
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Subjective */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-800 mb-1.5">Subjective</label>
+        <textarea rows={3} placeholder="Patient presentation, caregiver report, relevant observations..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+      </div>
+
+      {/* Objective — Goals replace the free text */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <label className="block text-sm font-semibold text-gray-800">Objective — Goal Progress</label>
+          <span className="text-xs text-gray-400">{Object.values(updates).filter((u) => u.value).length} of {speechGoals.length} updated</span>
+        </div>
+        <div className="space-y-3">
+          {speechGoals.map((goal) => {
+            const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+            const latestDataPoint = goal.data_points[goal.data_points.length - 1];
+            const update = updates[goal.id];
+            const hasUpdate = update?.value?.trim();
+            const isChild = goal.goal_type === "short_term";
+
+            const fmtVal = (v: string) => {
+              const d = v.replace(/_/g, " ");
+              if (goal.measurement_type === "percentage") return `${d}%`;
+              if (goal.measurement_type === "duration") return `${d} ${(goal.measurement_config.unit as string) || "sec"}`;
+              if (goal.measurement_type === "count") return `${d} ${(goal.measurement_config.unit as string) || ""}`;
+              if (goal.measurement_type === "binary") return d === "true" ? "Met" : "Not met";
+              return d;
+            };
+
+            return (
+              <div key={goal.id} className={`${isChild ? "ml-8" : ""}`}>
+                {isChild && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
+                <div className={`rounded-lg overflow-hidden border shadow-sm ${hasUpdate ? "border-green-200" : "border-gray-200"}`}>
+                  <div className={`flex items-center justify-between px-4 py-2 ${hasUpdate ? "bg-green-100/70" : "bg-indigo-100/70"}`}>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-sm font-bold ${hasUpdate ? "text-green-900" : "text-indigo-900"}`}>
+                        {goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}
+                      </span>
+                      <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {latestDataPoint && (
+                        <span className="text-xs text-gray-500">Last: {fmtVal(latestDataPoint.value)}</span>
+                      )}
+                      {hasUpdate && (
+                        <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50/60 px-4 py-3">
+                    <p className="text-sm text-gray-600 leading-relaxed mb-2">{goal.goal_text}</p>
+
+                    {/* Measurement trajectory */}
+                    {goal.baseline_value && goal.target_value && goal.data_points.length > 0 && (() => {
+                      const dp = goal.data_points;
+                      const currentDp = dp[dp.length - 1];
+                      const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
+                      const previousDp = dp.length > 2 ? dp[prevIdx] : null;
+                      return (
+                        <div className={`grid gap-3 mb-3 ${previousDp ? "grid-cols-4" : "grid-cols-3"}`}>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Baseline <span className="font-normal text-gray-400">{formatDate(goal.start_date)}</span></label>
+                            <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(goal.baseline_value)}</div>
+                          </div>
+                          {previousDp && (
+                            <div>
+                              <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Previous <span className="font-normal text-gray-400">{formatDate(previousDp.recorded_at)}</span></label>
+                              <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(previousDp.value)}</div>
+                            </div>
+                          )}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-indigo-600 mb-0.5">Current <span className="font-normal text-indigo-400">{formatDate(currentDp.recorded_at)}</span></label>
+                            <div className="border border-indigo-200 rounded px-2 py-1 bg-indigo-50 text-xs font-semibold text-indigo-700">{fmtVal(currentDp.value)}</div>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">Target <span className="font-normal text-gray-400">{goal.target_date ? formatDate(goal.target_date) : ""}</span></label>
+                            <div className="border border-gray-200 rounded px-2 py-1 bg-white text-xs text-gray-600">{fmtVal(goal.target_value!)}</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Today&apos;s Measurement</label>
+                        <input
+                          value={update?.value || ""}
+                          onChange={(e) => updateField(goal.id, "value", e.target.value)}
+                          placeholder={goal.measurement_type === "percentage" ? "e.g. 75" : "Value"}
+                          className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Activity</label>
+                        <input
+                          value={update?.activity || ""}
+                          onChange={(e) => updateField(goal.id, "activity", e.target.value)}
+                          placeholder="e.g. Articulation drills"
+                          className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Note</label>
+                        <input
+                          value={update?.note || ""}
+                          onChange={(e) => updateField(goal.id, "note", e.target.value)}
+                          placeholder="Optional"
+                          className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Assessment */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-800 mb-1.5">Assessment</label>
+        <textarea rows={3} placeholder="Clinical interpretation of goal progress, response to treatment..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+      </div>
+
+      {/* Plan */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-800 mb-1.5">Plan</label>
+        <textarea rows={3} placeholder="Treatment plan, modifications, next session focus..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+      </div>
+    </div>
+  );
+}
+
 function NoteForm({ format }: { format: NoteFormat }) {
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("10:30");
@@ -1309,10 +1465,14 @@ function NoteForm({ format }: { format: NoteFormat }) {
           {format === "freetext_v2goalcustom" && (
             <FreeTextV2GoalCustom />
           )}
+
+          {format === "integrated_soap" && (
+            <IntegratedSoap />
+          )}
         </div>
 
         {/* Additional custom form components - hide on goal-specific formats */}
-        {format !== "freetext_v1goallist" && format !== "freetext_v1goalprogress" && format !== "freetext_v1goaladmin" && format !== "freetext_v1goalcustom" && format !== "freetext_goals" && format !== "freetext_goallist" && format !== "freetext_v2goaladmin" && format !== "freetext_v2goalcustom" && (
+        {format !== "freetext_v1goallist" && format !== "freetext_v1goalprogress" && format !== "freetext_v1goaladmin" && format !== "freetext_v1goalcustom" && format !== "freetext_goals" && format !== "freetext_goallist" && format !== "freetext_v2goaladmin" && format !== "freetext_v2goalcustom" && format !== "integrated_soap" && (
         <div className="px-5 py-4 border-t border-gray-200 space-y-4">
           {/* Diagnosis Codes (smart component) */}
           <div>
@@ -1403,7 +1563,7 @@ function NoteForm({ format }: { format: NoteFormat }) {
       </div>
 
       {/* Right sidebar - hide on formats with inline goals */}
-      {format !== "freetext_goals" && format !== "freetext_goallist" && format !== "freetext_v1goallist" && format !== "freetext_v1goalprogress" && format !== "freetext_v1goaladmin" && format !== "freetext_v1goalcustom" && format !== "freetext_v2goaladmin" && format !== "freetext_v2goalcustom" && <div className="w-72 flex-shrink-0 space-y-3">
+      {format !== "freetext_goals" && format !== "freetext_goallist" && format !== "freetext_v1goallist" && format !== "freetext_v1goalprogress" && format !== "freetext_v1goaladmin" && format !== "freetext_v1goalcustom" && format !== "freetext_v2goaladmin" && format !== "freetext_v2goalcustom" && format !== "integrated_soap" && <div className="w-72 flex-shrink-0 space-y-3">
         {/* Load a prior note */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <button
@@ -1518,7 +1678,7 @@ function NoteForm({ format }: { format: NoteFormat }) {
 }
 
 const VNCF_FORMATS = NOTE_FORMATS.filter((f) => ["soap", "freetext", "dap", "freetext_v1goallist", "freetext_v1goalprogress", "freetext_v1goaladmin", "freetext_v1goalcustom"].includes(f.value));
-const V2_FORMATS = NOTE_FORMATS.filter((f) => ["freetext_goals", "freetext_goallist", "freetext_v2goaladmin", "freetext_v2goalcustom"].includes(f.value));
+const V2_FORMATS = NOTE_FORMATS.filter((f) => ["freetext_goals", "freetext_goallist", "freetext_v2goaladmin", "freetext_v2goalcustom", "integrated_soap"].includes(f.value));
 
 export default function VisitNoteNewView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" | "progress_reports" }) {
   const visibleFormats = project === "vncf" ? VNCF_FORMATS : V2_FORMATS;
@@ -1533,7 +1693,7 @@ export default function VisitNoteNewView({ project = "goals_v2" }: { project?: "
 
       {/* Format selector */}
       <div className="flex items-center gap-1.5 mb-6">
-        <span className="text-xs text-gray-400 mr-1">Showing:</span>
+        <span className="text-xs text-gray-400 mr-1">Showing goal component:</span>
         {visibleFormats.map((f) => (
           <button
             key={f.value}

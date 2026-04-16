@@ -244,7 +244,7 @@ function getMockAiAnalysis(goals: PatientGoal[]): AiGoalSuggestion[] {
 }
 
 // ── Main view ──
-type ShowFormat = "soap" | "freetext" | "dap" | "freetext_goallist" | "freetext_goalprogress" | "freetext_goaladmin" | "freetext_goalcustom" | "freetext_v2goaladmin" | "freetext_v2goalcustom";
+type ShowFormat = "soap" | "freetext" | "dap" | "freetext_goallist" | "freetext_goalprogress" | "freetext_goaladmin" | "freetext_goalcustom" | "freetext_v2goaladmin" | "freetext_v2goalcustom" | "integrated_soap";
 
 // ── Goal Progress show card (read-only, with trajectory) ──
 function GoalDataShowCard({ goal }: { goal: PatientGoal }) {
@@ -315,6 +315,7 @@ const V2_SHOW_FORMATS: { value: ShowFormat; label: string }[] = [
   { value: "freetext_goallist", label: "Goal Checklist" },
   { value: "freetext_v2goaladmin", label: "Goal Admin" },
   { value: "freetext_v2goalcustom", label: "Goal Custom" },
+  { value: "integrated_soap", label: "Integrated SOAP" },
 ];
 
 export default function VisitNoteView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" | "progress_reports" }) {
@@ -366,7 +367,7 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
       <div className="mb-6">
         {(project === "vncf" || project === "goals_v2") && (
           <div className="flex items-center gap-1.5 mt-3">
-            <span className="text-xs text-gray-400 mr-1">Showing:</span>
+            <span className="text-xs text-gray-400 mr-1">Showing goal component:</span>
             {(project === "vncf" ? VNCF_SHOW_FORMATS : V2_SHOW_FORMATS).map((f) => (
               <button
                 key={f.value}
@@ -878,6 +879,62 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
             </div>
           </div>
         )}
+
+        {/* Integrated SOAP - saved view */}
+        {showFormat === "integrated_soap" && project === "goals_v2" && (
+          <div className="px-5 py-4 border-b border-gray-200 space-y-4">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-800 mb-1">Subjective</h4>
+              <p className="text-sm text-gray-600">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Patient appeared well-rested and motivated to participate in activities.</p>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-800 mb-2">Objective — Goal Progress</h4>
+              <div className="space-y-3">
+                {speechGoals.filter((g) => g.goal_type !== "short_term").map((goal) => {
+                  const children = speechGoals.filter((c) => c.parent_id === goal.id);
+                  return (
+                    <div key={goal.id}>
+                      <GoalDataShowCard goal={goal} />
+                      {children.map((child) => (
+                        <div key={child.id} className="ml-8 mt-2">
+                          <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>
+                          <GoalDataShowCard goal={child} />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-800 mb-1">Assessment</h4>
+              <p className="text-sm text-gray-600">Patient demonstrated 72% accuracy for /r/ across all positions, up from 68% last session. Initial position is strongest at 85%. Final position remains challenging, particularly with -er endings. Patient benefits from visual modeling and self-monitoring strategies.</p>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-800 mb-1">Plan</h4>
+              <p className="text-sm text-gray-600">Continue targeting /r/ in final position with emphasis on -er endings. Introduce self-monitoring checklist. Begin carryover activities for initial /r/ to conversational speech. Next session: 04/15/2026.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Add Goal Progress button — shows when no goal component is on the visit note form */}
+        {project === "goals_v2" && showFormat === "integrated_soap" && (
+          <div className="px-5 py-4 border-b border-gray-200">
+            <div className="text-xs text-gray-400 mb-2">Goal data is collected inline in the Objective section above.</div>
+          </div>
+        )}
+
+        {project === "goals_v2" && (showFormat === "freetext_goalprogress" || showFormat === "freetext_goallist" || showFormat === "freetext_v2goaladmin" || showFormat === "freetext_v2goalcustom" || showFormat === "integrated_soap") ? null : project === "goals_v2" ? (
+          <div className="px-5 py-4 border-b border-gray-200">
+            <p className="text-xs text-gray-400 mb-2">No goal component was included on this visit note form. You can add goal progress data separately:</p>
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-indigo-600 border-2 border-dashed border-indigo-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Add Goal Progress
+            </button>
+          </div>
+        ) : null}
 
         {/* Additional fields - only for SOAP/Free Text/DAP */}
         {project === "vncf" && (showFormat === "soap" || showFormat === "freetext" || showFormat === "dap") && (

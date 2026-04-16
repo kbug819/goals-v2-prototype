@@ -55,7 +55,7 @@ export default function TopNav({
             </button>
           </div>
         </div>
-        <nav className="flex gap-1">
+        <nav className="flex gap-1 justify-center">
           {tabs.map((tab) => (
             <button
               key={tab}
