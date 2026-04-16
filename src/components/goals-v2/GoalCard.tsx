@@ -3,120 +3,92 @@
 import { useState } from "react";
 import { PatientGoal } from "@/data/mockData";
 import StatusBadge from "@/components/shared/StatusBadge";
-import ProgressBar from "@/components/shared/ProgressBar";
+
 import ScaleProgress from "@/components/shared/ScaleProgress";
 import { formatDate, formatDateShort } from "@/utils/formatDate";
 
 
 function MeasurementDisplay({ goal }: { goal: PatientGoal }) {
-  const latest = goal.data_points[goal.data_points.length - 1];
+  if (!goal.baseline_value || !goal.target_value) return null;
+  const dp = goal.data_points;
+  const currentDp = dp.length > 0 ? dp[dp.length - 1] : null;
+  const prevIdx = Math.max(0, Math.floor(dp.length / 2) - 1);
+  const previousDp = dp.length > 2 ? dp[prevIdx] : null;
 
-  if (goal.measurement_type === "percentage" && goal.baseline_value && goal.target_value) {
-    const current = latest ? parseInt(latest.value) : parseInt(goal.baseline_value);
-    return (
-      <ProgressBar
-        baseline={parseInt(goal.baseline_value)}
-        current={current}
-        target={parseInt(goal.target_value)}
-      />
-    );
-  }
+  const fmtVal = (v: string) => {
+    const d = v.replace(/_/g, " ");
+    if (goal.measurement_type === "percentage") return `${d}%`;
+    if (goal.measurement_type === "duration") return `${d} ${(goal.measurement_config.unit as string) || "sec"}`;
+    if (goal.measurement_type === "count") return `${d} ${(goal.measurement_config.unit as string) || ""}`;
+    if (goal.measurement_type === "binary") return d === "true" ? "Met" : "Not met";
+    if (goal.measurement_type === "custom") return `${d} ${(goal.measurement_config.unit as string) || ""}`;
+    return d;
+  };
 
+  // Scale gets its own visual
   if (goal.measurement_type === "scale" && goal.measurement_config.levels) {
     const levels = goal.measurement_config.levels as string[];
-    const current = latest ? latest.value : (goal.baseline_value || levels[0]);
+    const current = currentDp ? currentDp.value : (goal.baseline_value || levels[0]);
     return (
-      <ScaleProgress
-        levels={levels}
-        baseline={goal.baseline_value || levels[0]}
-        current={current}
-        target={goal.target_value || levels[levels.length - 1]}
-      />
-    );
-  }
-
-  if (goal.measurement_type === "count" && goal.baseline_value && goal.target_value) {
-    const config = goal.measurement_config;
-    const unit = (config.unit as string) || "";
-    const per = (config.per as string) || "";
-    const current = latest ? latest.value : goal.baseline_value;
-    const baseNum = parseInt(goal.baseline_value);
-    const curNum = parseInt(current);
-    const targetNum = parseInt(goal.target_value);
-    const pct = Math.round(((curNum - baseNum) / (targetNum - baseNum)) * 100);
-    return (
-      <div className="text-sm text-gray-600">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium">Count:</span>
-          <span>{goal.baseline_value} {unit}</span>
-          <span className="text-gray-400">&rarr;</span>
-          <span className="font-semibold text-indigo-600">{current} {unit}</span>
-          <span className="text-gray-400">&rarr;</span>
-          <span>{goal.target_value} {unit}{per ? ` per ${per}` : ""}</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2">
-          <div className="bg-indigo-500 h-2 rounded-full transition-all" style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
-        </div>
+      <div>
+        <ScaleProgress
+          levels={levels}
+          baseline={goal.baseline_value || levels[0]}
+          current={current}
+          target={goal.target_value || levels[levels.length - 1]}
+        />
+        {previousDp && (
+          <div className="text-[11px] text-gray-400 mt-1">Previous: {previousDp.value.replace(/_/g, " ")} <span className="text-gray-300">({formatDate(previousDp.recorded_at)})</span></div>
+        )}
       </div>
     );
   }
 
-  if (goal.measurement_type === "duration" && goal.baseline_value && goal.target_value) {
-    const unit = (goal.measurement_config.unit as string) || "seconds";
-    const current = latest ? latest.value : goal.baseline_value;
-    const baseNum = parseInt(goal.baseline_value);
-    const curNum = parseInt(current);
-    const targetNum = parseInt(goal.target_value);
-    const pct = Math.round(((curNum - baseNum) / (targetNum - baseNum)) * 100);
-    return (
-      <div className="text-sm text-gray-600">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium">Duration:</span>
-          <span>{goal.baseline_value}s</span>
-          <span className="text-gray-400">&rarr;</span>
-          <span className="font-semibold text-indigo-600">{current}s</span>
-          <span className="text-gray-400">&rarr;</span>
-          <span>{goal.target_value} {unit}</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2">
-          <div className="bg-indigo-500 h-2 rounded-full transition-all" style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
-        </div>
-      </div>
-    );
-  }
-
+  // Binary gets a simple display
   if (goal.measurement_type === "binary") {
-    const current = latest ? latest.value : (goal.baseline_value || "false");
+    const current = currentDp ? currentDp.value : (goal.baseline_value || "false");
     const achieved = current === "true";
     return (
-      <div className="text-sm text-gray-600 flex items-center gap-2">
-        <span className="font-medium">Status:</span>
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-          achieved ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-        }`}>
-          {achieved ? "Achieved" : "Not yet achieved"}
-        </span>
+      <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${achieved ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}`}>
+        {achieved ? (
+          <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+        ) : (
+          <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        )}
+        <span className={`text-xs font-semibold ${achieved ? "text-green-700" : "text-amber-700"}`}>{achieved ? "Met" : "Not met"}</span>
+        <span className="text-xs text-gray-400">{achieved ? "— goal achieved" : "— in progress"}</span>
       </div>
     );
   }
 
-  if (goal.measurement_type === "custom" && goal.baseline_value && goal.target_value) {
-    const label = (goal.measurement_config.label as string) || "Value";
-    const unit = (goal.measurement_config.unit as string) || "";
-    const current = latest ? latest.value : goal.baseline_value;
-    return (
-      <div className="text-sm text-gray-600">
-        <span className="font-medium">{label}:</span>{" "}
-        <span>{goal.baseline_value} {unit}</span>
-        <span className="mx-2 text-gray-400">&rarr;</span>
-        <span className="font-semibold text-indigo-600">{current} {unit}</span>
-        <span className="mx-2 text-gray-400">&rarr;</span>
-        <span>{goal.target_value} {unit}</span>
-      </div>
-    );
-  }
+  // Numeric types get inline text + progress bar with Previous marker
+  const currentVal = currentDp ? currentDp.value : goal.baseline_value;
+  const baseNum = parseFloat(goal.baseline_value);
+  const targetNum = parseFloat(goal.target_value);
+  const curNum = parseFloat(currentVal);
+  const range = targetNum - baseNum;
+  const pct = range !== 0 ? Math.min(100, Math.max(0, Math.round(((curNum - baseNum) / range) * 100))) : 0;
+  const prevPct = previousDp && range !== 0 ? Math.min(100, Math.max(0, Math.round(((parseFloat(previousDp.value) - baseNum) / range) * 100))) : null;
 
-  return null;
+  const unit = goal.measurement_type === "percentage" ? "%" :
+    goal.measurement_type === "duration" ? ` ${(goal.measurement_config.unit as string) || "sec"}` :
+    goal.measurement_type === "count" ? ` ${(goal.measurement_config.unit as string) || ""}` :
+    goal.measurement_type === "custom" ? ` ${(goal.measurement_config.unit as string) || ""}` : "";
+  const label = goal.measurement_type === "custom" ? ((goal.measurement_config.label as string) || "Value") :
+    goal.measurement_type.charAt(0).toUpperCase() + goal.measurement_type.slice(1);
+
+  return (
+    <div className="w-full">
+      <div className="flex justify-between text-xs text-gray-500 mb-1">
+        <span>Baseline: {goal.baseline_value}{unit}</span>
+        <span className="font-semibold text-indigo-600">Current: {fmtVal(currentVal)}</span>
+        <span>Target: {goal.target_value}{unit}</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className="bg-indigo-500 h-2.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
 }
 
 function DataPointsPanel({ goal }: { goal: PatientGoal }) {
@@ -163,7 +135,7 @@ function DataPointsPanel({ goal }: { goal: PatientGoal }) {
 
   return (
     <div className="mt-3 space-y-3">
-      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Goal Data Points</h4>
+      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Goal Progress</h4>
 
       {/* Line chart */}
       {canChart && (
@@ -197,13 +169,35 @@ function DataPointsPanel({ goal }: { goal: PatientGoal }) {
         </div>
       )}
 
+      {/* Scale progression visual */}
+      {(() => {
+        if (goal.measurement_type !== "scale" || !goal.measurement_config.levels || points.length < 1) return null;
+        const levels = goal.measurement_config.levels as string[];
+        return (
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-1">
+              {points.map((p, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  {i > 0 && <svg className="w-3 h-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded ${
+                    i === points.length - 1 ? "bg-indigo-100 text-indigo-700 font-medium" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {p.value.replace(/_/g, " ")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Data table */}
       <div className="space-y-1">
         {points.map((dp, i) => (
           <div key={i} className="flex items-start gap-3 text-xs">
             <span className="text-gray-400 w-20 flex-shrink-0">{formatDate(dp.recorded_at)}</span>
-            <span className="font-medium text-gray-700 w-20 flex-shrink-0">{dp.value.replace(/_/g, " ")}</span>
-            {dp.note && <span className="text-gray-500 italic">{dp.note}</span>}
+            <span className="font-medium text-gray-700 flex-shrink-0">{goal.measurement_type === "binary" ? (dp.value === "true" ? "Met" : "Not met") : dp.value.replace(/_/g, " ")}</span>
+            {dp.note && <span className="text-gray-500 italic truncate">{dp.note}</span>}
           </div>
         ))}
       </div>
@@ -271,7 +265,7 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
       <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
         {/* Header bar */}
         <div
-          className={`flex items-center justify-between px-4 py-2.5 cursor-pointer ${headerBg}`}
+          className={`flex items-center justify-between px-4 py-2.5 cursor-pointer border-l-3 border-l-amber-300 ${headerBg}`}
           onClick={() => setExpanded(!expanded)}
         >
           <div className="flex items-center gap-3 min-w-0">
@@ -282,6 +276,7 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
               {goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}
             </span>
             <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+            {!isChild && <span className="text-[10px] font-semibold text-white bg-gray-500 rounded px-1.5 py-0.5">{goal.discipline}</span>}
             {goal.met_on && <span className="text-xs text-gray-500">Met {formatDate(goal.met_on)}</span>}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -330,55 +325,46 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
             {/* Measurement progress */}
             <MeasurementDisplay goal={goal} />
 
-            {/* Current functional level (from latest event) */}
-            {goal.events.length > 0 && goal.events[goal.events.length - 1].current_functional_level && (
-              <div className="bg-white rounded px-3 py-2 border border-gray-200">
-                <span className="text-xs font-semibold text-gray-600">Current function:</span>
-                <span className="text-xs text-gray-500 ml-1">{goal.events[goal.events.length - 1].current_functional_level}</span>
-              </div>
-            )}
 
-            {/* Meta info */}
-            <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-              <span>Start: {formatDate(goal.start_date)}</span>
-              {goal.target_date && <span>Target: {formatDate(goal.target_date)}</span>}
-            </div>
-
-            {/* Toggle buttons + current comment */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowHistory(!showHistory); }}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex-shrink-0 ${
-                    showHistory ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-100"
-                  }`}
-                >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Status history
-                </button>
-                {goal.data_points.length > 0 && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowDataPoints(!showDataPoints); }}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex-shrink-0 ${
-                      showDataPoints ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-100"
-                    }`}
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Data points ({goal.data_points.length})
-                  </button>
-                )}
-              </div>
+            {/* Meta info + current comment */}
+            <div className="flex items-start gap-3 text-xs text-gray-500">
+              <span className="flex-shrink-0">Start: {formatDate(goal.start_date)}</span>
+              {goal.target_date && <span className="flex-shrink-0">Target: {formatDate(goal.target_date)}</span>}
               {goal.events.length > 0 && goal.events[goal.events.length - 1].comment && (
-                <span title={goal.events[goal.events.length - 1].comment!} className="inline-flex items-center gap-1.5 text-xs text-gray-500 italic bg-white border border-gray-200 rounded-full px-2.5 py-1 truncate max-w-xs cursor-default">
-                  <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <span className="text-gray-400 italic truncate" title={goal.events[goal.events.length - 1].comment!}>
+                  <svg className="w-3 h-3 text-gray-300 inline-block mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                   </svg>
                   {goal.events[goal.events.length - 1].comment}
                 </span>
+              )}
+            </div>
+
+            {/* Toggle buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowHistory(!showHistory); }}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex-shrink-0 ring-1 ring-amber-200 ${
+                  showHistory ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-100"
+                }`}
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Status history
+              </button>
+              {goal.data_points.length > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowDataPoints(!showDataPoints); }}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex-shrink-0 ring-1 ring-amber-200 ${
+                    showDataPoints ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Goal progress ({goal.data_points.length})
+                </button>
               )}
             </div>
             {showHistory && <EventTimeline goal={goal} />}

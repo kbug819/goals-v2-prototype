@@ -172,10 +172,10 @@ export default function CustomFormShowView() {
   // - LTG 3.0.0 (pg-5, standalone): marked as met with both STGs
   // New pending goals added on this POC
   const draftActions: Record<string, { action: DraftAction; comment: string; funcLevel: string }> = {
-    "pg-1": { action: "continued", comment: "Progressing well — 72% across positions, continuing current approach with focus on carryover", funcLevel: "Producing /r/ at 72% across all positions; initial strongest at 85%, final at 65%. Self-monitoring improving." },
-    "pg-3": { action: "discontinued", comment: "Discontinuing — reassessing approach for final position /r/, will create new STG with different strategy", funcLevel: "Final position /r/ at 68% but plateauing with current approach; -er endings remain inconsistent" },
-    "pg-4": { action: "continued", comment: "Good progress — moving from maximal to moderate assist, continuing expressive language work", funcLevel: "Formulating 3-4 word sentences with moderate verbal cueing; using sentence starters independently" },
-    "pg-5": { action: "met", comment: "MLU target of 4.0 achieved across 3 consecutive sessions — goal met", funcLevel: "MLU at 4.1 words in spontaneous speech; using descriptors, conjunctions, and prepositions consistently" },
+    "sp-1": { action: "continued", comment: "Progressing well — 72% across positions, continuing current approach with focus on carryover", funcLevel: "Producing /r/ at 72% across all positions; initial strongest at 85%, final at 65%. Self-monitoring improving." },
+    "sp-1-2": { action: "discontinued", comment: "Discontinuing — reassessing approach for final position /r/, will create new STG with different strategy", funcLevel: "Final position /r/ at 68% but plateauing with current approach; -er endings remain inconsistent" },
+    "sp-2": { action: "continued", comment: "Good progress — moving from maximal to moderate assist, continuing expressive language work", funcLevel: "Formulating 3-4 word sentences with moderate verbal cueing; using sentence starters independently" },
+    "sp-3": { action: "met", comment: "MLU target of 4.0 achieved across 3 consecutive sessions — goal met", funcLevel: "MLU at 4.1 words in spontaneous speech; using descriptors, conjunctions, and prepositions consistently" },
   };
 
   // Apply draft actions to goals and their children
@@ -205,7 +205,7 @@ export default function CustomFormShowView() {
     {
       id: "pg-new-stg1",
       goal_type: "short_term",
-      parent_id: "pg-1",
+      parent_id: "sp-1",
       goal_text: "Patient will produce /r/ in medial position of words with 85% accuracy given minimal verbal cues across 3 consecutive sessions.",
       measurement_type: "percentage",
       baseline_value: "35",
@@ -227,7 +227,7 @@ export default function CustomFormShowView() {
     {
       id: "pg-new-stg2",
       goal_type: "short_term",
-      parent_id: "pg-4",
+      parent_id: "sp-2",
       goal_text: "Patient will formulate 4-word sentences using a visual sentence strip with minimal verbal cues in 8/10 opportunities.",
       measurement_type: "percentage",
       baseline_value: "30",

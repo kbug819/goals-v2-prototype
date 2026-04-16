@@ -10,10 +10,10 @@ function GoalNarrative({ goal, depth = 0 }: { goal: PatientGoal; depth?: number 
 
   // Mock narrative for show view
   const narratives: Record<string, string> = {
-    "pg-1": "Patient has demonstrated steady improvement in /r/ production across word positions. Currently at 72% accuracy, up from 45% baseline.",
-    "pg-3": "Patient progressing toward target. Currently at 68% accuracy for final /r/, up from 40% baseline.",
-    "pg-4": "Patient has moved from maximal assist to moderate assist level for expressive language.",
-    "pg-5": "MLU has increased from 2.5 to 3.1 words. Patient using more descriptors and conjunctions.",
+    "sp-1": "Patient has demonstrated steady improvement in /r/ production across word positions. Currently at 72% accuracy, up from 45% baseline.",
+    "sp-1-2": "Patient progressing toward target. Currently at 68% accuracy for final /r/, up from 40% baseline.",
+    "sp-2": "Patient has moved from maximal assist to moderate assist level for expressive language.",
+    "sp-3": "MLU has increased from 2.5 to 3.1 words. Patient using more descriptors and conjunctions.",
   };
 
   return (

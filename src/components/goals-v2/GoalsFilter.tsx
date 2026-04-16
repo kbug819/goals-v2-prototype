@@ -27,7 +27,7 @@ export default function GoalsFilter({ activeFilter, onFilterChange, counts, disc
         <div className="flex items-center gap-2">
           <button
             onClick={() => onDisciplineChange("all")}
-            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ring-1 ring-amber-200 ${
               activeDiscipline === "all"
                 ? "bg-gray-800 text-white"
                 : "text-gray-500 hover:bg-gray-100"
@@ -39,7 +39,7 @@ export default function GoalsFilter({ activeFilter, onFilterChange, counts, disc
             <button
               key={d}
               onClick={() => onDisciplineChange(d)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+              className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ring-1 ring-amber-200 ${
                 activeDiscipline === d
                   ? "bg-gray-800 text-white"
                   : "text-gray-500 hover:bg-gray-100"
@@ -62,7 +62,7 @@ export default function GoalsFilter({ activeFilter, onFilterChange, counts, disc
             <button
               key={filter.value}
               onClick={() => onFilterChange(filter.value)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ring-1 ring-amber-200 ${
                 activeFilter === filter.value
                   ? "bg-indigo-100 text-indigo-700"
                   : "text-gray-500 hover:bg-gray-100"

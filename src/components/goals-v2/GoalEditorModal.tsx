@@ -497,7 +497,7 @@ export default function GoalEditorModal({ disciplines, existingGoals, onSave, on
             {/* Binary */}
             {measurementType === "binary" && (
               <div className="text-sm text-gray-500">
-                <p>Baseline will be set to <span className="font-medium text-gray-700">Not achieved</span> and target to <span className="font-medium text-gray-700">Achieved</span>.</p>
+                <p>Baseline will be set to <span className="font-medium text-gray-700">Not met</span> and target to <span className="font-medium text-gray-700">Met</span>.</p>
                 <p className="text-xs text-gray-400 mt-1">No additional configuration needed.</p>
               </div>
             )}

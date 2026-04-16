@@ -33,67 +33,63 @@ function StatusActionRow({ goal, activeChildCount = 0, onStatusChange }: { goal:
 
   const showChildWarning = activeChildCount > 0 && (action === "met" || action === "discontinued");
 
-  if (!action) {
-    return (
-      <div className="flex items-center gap-2 mt-2">
-        <button onClick={() => setAction("continued")} className="px-2.5 py-1 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">
+  return (
+    <div className="mt-2 space-y-2">
+      {/* Buttons always visible */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setAction(action === "continued" ? null : "continued")} className={`px-2.5 py-1 text-xs font-medium border rounded-lg transition-colors ${action === "continued" ? "bg-indigo-100 border-indigo-500 text-indigo-700" : "text-indigo-600 border-indigo-200 hover:bg-indigo-50"}`}>
           Continue
         </button>
-        <button onClick={() => setAction("met")} className="px-2.5 py-1 text-xs font-medium text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors">
+        <button onClick={() => setAction(action === "met" ? null : "met")} className={`px-2.5 py-1 text-xs font-medium border rounded-lg transition-colors ${action === "met" ? "bg-green-100 border-green-500 text-green-700" : "text-green-600 border-green-200 hover:bg-green-50"}`}>
           Mark Met
         </button>
-        <button onClick={() => setAction("discontinued")} className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+        <button onClick={() => setAction(action === "discontinued" ? null : "discontinued")} className={`px-2.5 py-1 text-xs font-medium border rounded-lg transition-colors ${action === "discontinued" ? "bg-red-100 border-red-500 text-red-700" : "text-red-600 border-red-200 hover:bg-red-50"}`}>
           Discontinue
         </button>
       </div>
-    );
-  }
 
-  const cfg = actionConfig[action];
+      {/* Form panel — shows below the active button */}
+      {action && (() => {
+        const cfg = actionConfig[action];
+        return (
+          <div className={`border ${cfg.borderColor} rounded-lg p-3 bg-gray-50 space-y-2`}>
+            {showChildWarning && (
+              <div className={`flex items-start gap-2 text-xs rounded-lg px-3 py-2 ${
+                action === "met"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}>
+                <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span>
+                  {action === "met"
+                    ? `This will also mark ${activeChildCount} active short-term goal${activeChildCount > 1 ? "s" : ""} as met.`
+                    : `This will also discontinue ${activeChildCount} active short-term goal${activeChildCount > 1 ? "s" : ""}.`
+                  }
+                </span>
+              </div>
+            )}
 
-  return (
-    <div className={`mt-2 border ${cfg.borderColor} rounded-lg p-3 bg-gray-50 space-y-2`}>
-      <div className="flex items-center gap-2">
-        <span className={`text-xs font-medium ${cfg.color}`}>{cfg.label}</span>
-      </div>
-
-      {showChildWarning && (
-        <div className={`flex items-start gap-2 text-xs rounded-lg px-3 py-2 ${
-          action === "met"
-            ? "bg-green-50 border border-green-200 text-green-700"
-            : "bg-red-50 border border-red-200 text-red-700"
-        }`}>
-          <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-          <span>
-            {action === "met"
-              ? `This will also mark ${activeChildCount} active short-term goal${activeChildCount > 1 ? "s" : ""} as met.`
-              : `This will also discontinue ${activeChildCount} active short-term goal${activeChildCount > 1 ? "s" : ""}.`
-            }
-          </span>
-        </div>
-      )}
-
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        rows={2}
-        placeholder={cfg.placeholder}
-        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-      />
-      <div>
-        <label className="block text-xs text-gray-500 mb-1">Current Functional Level</label>
-        <input
-          value={functionalLevel}
-          onChange={(e) => setFunctionalLevel(e.target.value)}
-          placeholder="Update patient's current functional status..."
-          className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-      </div>
-      <div className="flex justify-end gap-2">
-        <button onClick={() => { setAction(null); setComment(""); }} className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
-        <button
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={2}
+              placeholder={cfg.placeholder}
+              className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            />
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Current Functional Level</label>
+              <input
+                value={functionalLevel}
+                onChange={(e) => setFunctionalLevel(e.target.value)}
+                placeholder="Update patient's current functional status..."
+                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setAction(null); setComment(""); setFunctionalLevel(""); }} className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+              <button
           onClick={handleSubmit}
           disabled={!comment.trim()}
           className={`px-3 py-1 text-xs font-medium text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed ${cfg.btnClass}`}
@@ -101,6 +97,9 @@ function StatusActionRow({ goal, activeChildCount = 0, onStatusChange }: { goal:
           {cfg.btnLabel}
         </button>
       </div>
+    </div>
+        );
+      })()}
     </div>
   );
 }

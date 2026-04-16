@@ -25,7 +25,7 @@ function formatValue(value: string, goal: PatientGoal): string {
       const label = (goal.measurement_config.label as string) || "";
       return `${display} ${unit}${label ? ` (${label})` : ""}`;
     }
-    case "binary": return display === "true" ? "Achieved" : "Not achieved";
+    case "binary": return display === "true" ? "Met" : "Not met";
     case "scale": return display;
     default: return display;
   }
@@ -115,7 +115,7 @@ function GoalUpdateModal({ goal, onSave, onClose, initialComment, initialDataVal
                         : "border-gray-200 text-gray-500 hover:bg-gray-50"
                     }`}
                   >
-                    {v === "true" ? "Achieved" : "Not achieved"}
+                    {v === "true" ? "Met" : "Not met"}
                   </button>
                 ))}
               </div>
@@ -210,7 +210,7 @@ function getMockAiAnalysis(goals: PatientGoal[]): AiGoalSuggestion[] {
   const suggestions: AiGoalSuggestion[] = [];
 
   for (const g of goals) {
-    if (g.id === "pg-1") {
+    if (g.id === "sp-1") {
       suggestions.push({
         goalId: g.id,
         suggestedValue: "72",
@@ -219,7 +219,7 @@ function getMockAiAnalysis(goals: PatientGoal[]): AiGoalSuggestion[] {
         confidence: "high",
         reasoning: "Assessment section states '72% accuracy for /r/ across all positions, up from 68% last session'",
       });
-    } else if (g.id === "pg-3") {
+    } else if (g.id === "sp-1-2") {
       suggestions.push({
         goalId: g.id,
         suggestedValue: "65",
@@ -228,7 +228,7 @@ function getMockAiAnalysis(goals: PatientGoal[]): AiGoalSuggestion[] {
         confidence: "medium",
         reasoning: "Assessment mentions 'Final position remains challenging, particularly with -er endings' — estimated from overall 72% with initial at 85%",
       });
-    } else if (g.id === "pg-5") {
+    } else if (g.id === "sp-3") {
       suggestions.push({
         goalId: g.id,
         suggestedValue: "3.2",
@@ -246,7 +246,7 @@ function getMockAiAnalysis(goals: PatientGoal[]): AiGoalSuggestion[] {
 // ── Main view ──
 type ShowFormat = "soap" | "freetext" | "dap" | "freetext_goallist" | "freetext_goalprogress" | "freetext_goaladmin" | "freetext_goalcustom" | "freetext_v2goaladmin" | "freetext_v2goalcustom";
 
-// ── Goal Data Collection show card (read-only, with trajectory) ──
+// ── Goal Progress show card (read-only, with trajectory) ──
 function GoalDataShowCard({ goal }: { goal: PatientGoal }) {
   const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
   const latestDp = goal.data_points.length > 0 ? goal.data_points[goal.data_points.length - 1] : null;
@@ -311,10 +311,10 @@ const VNCF_SHOW_FORMATS: { value: ShowFormat; label: string }[] = [
 ];
 
 const V2_SHOW_FORMATS: { value: ShowFormat; label: string }[] = [
-  { value: "freetext_goalprogress", label: "w/ Goal Progress" },
-  { value: "freetext_goallist", label: "w/ Goal List" },
-  { value: "freetext_v2goaladmin", label: "w/ Goal Admin" },
-  { value: "freetext_v2goalcustom", label: "w/ Goal Custom" },
+  { value: "freetext_goalprogress", label: "Goal Progress" },
+  { value: "freetext_goallist", label: "Goal Checklist" },
+  { value: "freetext_v2goaladmin", label: "Goal Admin" },
+  { value: "freetext_v2goalcustom", label: "Goal Custom" },
 ];
 
 export default function VisitNoteView({ project = "goals_v2" }: { project?: "vncf" | "goals_v2" | "progress_reports" }) {
@@ -358,7 +358,7 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
-        description="This page previews the visit note show/display view after saving. Therapy activity add button will only show if the base visit note does not already include a goal-specific component."
+        description='This page previews what a saved visit note looks like. Use the "Showing" buttons to switch between goal components: Goal Progress (measurement data), Goal Checklist (addressed goals with notes), Goal Admin (admin-configured fields), and Goal Custom (therapist-added controls).'
         todos={[]}
       />
 
@@ -708,112 +708,12 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
             </div>
           )}
 
-          {showFormat === "freetext_v2goaladmin" && project === "goals_v2" && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 leading-relaxed">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Session focused on articulation drills targeting /r/ in all positions. Patient demonstrated 72% accuracy across all positions, up from 68%.</p>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-800 mb-2">Goals w/ Admin Selected Components</h4>
-                <div className="space-y-2">
-                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 1.0.0</span>
-                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
-                      <span className="text-xs text-gray-400">percentage | Current: 72%</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">Patient will improve articulation of /r/ sound across all word positions with 90% accuracy.</p>
-                    <div className="text-xs text-gray-500 mt-1"><span className="font-medium text-gray-600">Function:</span> Producing /r/ at 72% across positions; initial position strongest at 85%</div>
-                    <div className="mt-2 space-y-1.5 text-xs text-gray-600">
-                      <div><span className="font-medium text-gray-500">Progress status:</span> Progressing</div>
-                      <div><span className="font-medium text-gray-500">Session notes:</span> Responding well to visual cues for /r/ blends, increasing accuracy</div>
-                    </div>
-                  </div>
-                  <div className="ml-6 border border-amber-200 rounded-lg px-4 py-2.5 bg-amber-50/50">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">STG 1.2.0</span>
-                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
-                      <span className="text-xs text-gray-400">percentage | Current: 68%</span>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">Produce /r/ in final position with 90% accuracy given minimal verbal cues.</p>
-                    <div className="mt-2 space-y-1.5 text-xs text-gray-600">
-                      <div><span className="font-medium text-gray-500">Progress status:</span> Plateau</div>
-                      <div><span className="font-medium text-gray-500">Session notes:</span> -er endings still challenging, adding visual modeling strategies</div>
-                    </div>
-                  </div>
-                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 2.0.0</span>
-                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
-                      <span className="text-xs text-gray-400">scale | Current: moderate assist</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">Patient will improve expressive language skills to formulate age-appropriate sentences.</p>
-                    <div className="text-xs text-gray-500 mt-1"><span className="font-medium text-gray-600">Function:</span> Holding at moderate assist; beginning to use sentence starters independently</div>
-                    <div className="mt-2 space-y-1.5 text-xs text-gray-600">
-                      <div><span className="font-medium text-gray-500">Progress status:</span> Progressing</div>
-                      <div><span className="font-medium text-gray-500">Session notes:</span> Using sentence starters independently, moderate assist level</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showFormat === "freetext_v2goalcustom" && project === "goals_v2" && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 leading-relaxed">Patient arrived on time and was cooperative. Parent reports practicing /r/ words at home 3x per week. Session focused on articulation drills targeting /r/ in all positions. Patient demonstrated 72% accuracy across all positions, up from 68%.</p>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                  Goals w/ Custom Components
-                  <span className="ml-2 text-xs font-medium text-violet-600 bg-violet-100 rounded-full px-2 py-0.5">Possible future iteration</span>
-                </h4>
-                <div className="space-y-2">
-                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 1.0.0</span>
-                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
-                      <span className="text-xs text-gray-400">percentage | Current: 72%</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">Patient will improve articulation of /r/ sound across all word positions with 90% accuracy.</p>
-                    <div className="text-xs text-gray-500 mt-1"><span className="font-medium text-gray-600">Function:</span> Producing /r/ at 72% across positions; initial position strongest at 85%</div>
-                    <div className="mt-2 space-y-1.5">
-                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600"><span className="font-medium text-gray-500">Measurement:</span> 72% (percentage)</div>
-                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600"><span className="font-medium text-gray-500">Activity:</span> Articulation drills</div>
-                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600"><span className="font-medium text-gray-500">Rating:</span> 4 / 5</div>
-                    </div>
-                  </div>
-                  <div className="ml-6 border border-amber-200 rounded-lg px-4 py-2.5 bg-amber-50/50">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">STG 1.2.0</span>
-                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
-                      <span className="text-xs text-gray-400">percentage | Current: 68%</span>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">Produce /r/ in final position with 90% accuracy given minimal verbal cues.</p>
-                    <div className="mt-2 space-y-1.5">
-                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600"><span className="font-medium text-gray-500">Measurement:</span> 68% (percentage)</div>
-                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600"><span className="font-medium text-gray-500">Notes:</span> Still working on -er endings, visual modeling helping</div>
-                    </div>
-                  </div>
-                  <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50/50">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">LTG 2.0.0</span>
-                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">active</span>
-                      <span className="text-xs text-gray-400">scale | Current: moderate assist</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">Patient will improve expressive language skills to formulate age-appropriate sentences.</p>
-                    <div className="mt-2 space-y-1.5">
-                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600"><span className="font-medium text-gray-500">Status:</span> Progressing</div>
-                      <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50/50 text-xs text-gray-600"><span className="font-medium text-gray-500">Notes:</span> Using sentence starters independently</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* V2 Goal Progress - saved view */}
+        {/* V2 Goal Progress saved view */}
         {showFormat === "freetext_goalprogress" && project === "goals_v2" && (
           <div className="px-5 py-4 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">Goal Data Collection</h3>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Goal Progress</h3>
             <div className="space-y-3">
               {speechGoals.filter((g) => g.goal_type !== "short_term").map((goal) => {
                 const children = speechGoals.filter((c) => c.parent_id === goal.id);
@@ -833,10 +733,10 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
           </div>
         )}
 
-        {/* V2 Goal List - saved view */}
+        {/* V2 Goal Checklist saved view */}
         {showFormat === "freetext_goallist" && project === "goals_v2" && (
           <div className="px-5 py-4 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">Session Checklist</h3>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Goal Checklist</h3>
             <div className="space-y-3">
               {speechGoals.filter((g) => g.goal_type !== "short_term").slice(0, 2).map((goal) => {
                 const children = speechGoals.filter((c) => c.parent_id === goal.id);

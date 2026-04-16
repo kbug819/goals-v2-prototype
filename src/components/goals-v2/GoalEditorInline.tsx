@@ -400,8 +400,8 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
         baseline_value: baselineValue || null,
         target_value: targetValue || null,
         measurement_config: config,
-        version_a: parentGoal ? parentGoal.version_a : (Math.max(0, ...existingGoals.filter((g) => g.goal_type !== "short_term").map((g) => g.version_a)) + 1),
-        version_b: parentGoal ? (Math.max(0, ...existingGoals.filter((g) => g.parent_id === parentGoal.id).map((g) => g.version_b)) + 1) : 0,
+        version_a: parentId && parentGoal ? parentGoal.version_a : (Math.max(0, ...existingGoals.filter((g) => g.goal_type !== "short_term").map((g) => g.version_a)) + 1),
+        version_b: parentId && parentGoal ? (Math.max(0, ...existingGoals.filter((g) => g.parent_id === parentId).map((g) => g.version_b)) + 1) : 0,
         version_c: 0,
         start_date: today,
         target_date: targetDate,
@@ -618,7 +618,7 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
           )}
 
           {measurementType === "binary" && (
-            <p className="text-xs text-gray-400">Baseline: <span className="text-gray-600">Not achieved</span> → Target: <span className="text-gray-600">Achieved</span>. No additional configuration needed.</p>
+            <p className="text-xs text-gray-400">Baseline: <span className="text-gray-600">Not met</span> → Target: <span className="text-gray-600">Met</span>. No additional configuration needed.</p>
           )}
 
           {measurementType === "custom" && (
@@ -670,10 +670,36 @@ export default function GoalEditorInline({ disciplines, existingGoals, onSave, o
                   d.setDate(d.getDate() + 7);
                   setTargetDate(d.toISOString().slice(0, 10));
                 }}
-                className="px-3 py-1.5 text-xs font-semibold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1.5 text-xs font-semibold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap"
               >
-                +1 Week
+                +1 Wk
               </button>
+            </div>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="text-[11px] text-gray-400">Quick set:</span>
+              {[
+                { label: "End of POC", months: 0, poc: true },
+                { label: "3 mo", months: 3, poc: false },
+                { label: "6 mo", months: 6, poc: false },
+                { label: "1 yr", months: 12, poc: false },
+              ].map((shortcut) => (
+                <button
+                  key={shortcut.label}
+                  type="button"
+                  onClick={() => {
+                    if (shortcut.poc) {
+                      setTargetDate("2026-09-01");
+                    } else {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() + shortcut.months);
+                      setTargetDate(d.toISOString().slice(0, 10));
+                    }
+                  }}
+                  className="px-2 py-0.5 text-[11px] font-medium text-gray-500 border border-gray-200 rounded hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
+                >
+                  {shortcut.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

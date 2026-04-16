@@ -3,8 +3,8 @@
 type Project = "vncf" | "goals_v2" | "progress_reports";
 
 const PROJECT_TABS: Record<Project, string[]> = {
-  vncf: ["Custom Form Creation", "Visit Note - New", "Visit Note - Show"],
-  goals_v2: ["POC / Eval - New", "POC / Eval - Show", "Goal Tab", "Custom Form Setup", "Visit Note - New", "Visit Note - Show"],
+  vncf: ["Custom Form Creation", "Visit Note - New", "Visit Note - Preview"],
+  goals_v2: ["Overview", "Custom Form Setup", "POC / Eval - New", "POC / Eval - Preview", "Goals Tab", "Visit Note - New", "Visit Note - Preview"],
   progress_reports: ["Progress Report - New", "Progress Report - Show", "Custom Form Setup"],
 };
 
@@ -48,12 +48,8 @@ export default function TopNav({
               Progress Reports
             </button>
             <button
-              onClick={() => onProjectChange("vncf")}
-              className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
-                project === "vncf"
-                  ? "bg-white text-gray-700 shadow-sm"
-                  : "text-gray-400 hover:text-gray-500"
-              }`}
+              disabled
+              className="px-4 py-1.5 text-sm font-semibold rounded-md text-gray-300 cursor-not-allowed"
             >
               Visit Note Custom Form (WIP)
             </button>

@@ -17,10 +17,10 @@ const NOTE_FORMATS: { value: NoteFormat; label: string; shortLabel: string; desc
   { value: "freetext_v1goalprogress", label: "w/ Goal Progress", shortLabel: "w/ Goal Progress", description: "Free text narrative with trials and prompting data" },
   { value: "freetext_v1goaladmin", label: "w/ Goal Admin Components", shortLabel: "w/ Goal Admin Components", description: "Free text with goals and admin-configured components per goal" },
   { value: "freetext_v1goalcustom", label: "w/ Goal Custom Components", shortLabel: "w/ Goal Custom Components", description: "Free text with goals and customizable components per goal" },
-  { value: "freetext_goals", label: "w/ Goal Progress (smart-goal-data-collection)", shortLabel: "w/ Goal Progress", description: "Full measurement logging per goal per session — writes goal_data_points" },
-  { value: "freetext_goallist", label: "w/ Goal List (smart-goals-session-checklist)", shortLabel: "w/ Goal List", description: "Lightweight goal checklist with notes per goal — writes goal_data_points" },
-  { value: "freetext_v2goaladmin", label: "w/ Goal Admin Components (smart-goal-admin-collection)", shortLabel: "w/ Goal Admin", description: "Admin-configured components per goal — org sets up fields in Custom Form Editor" },
-  { value: "freetext_v2goalcustom", label: "w/ Goal Custom Components (smart-goal-custom-collection)", shortLabel: "w/ Goal Custom", description: "Therapist adds custom components per goal at fill time" },
+  { value: "freetext_goals", label: "Goal Progress (smart-goal-data-collection)", shortLabel: "Goal Progress", description: "Full measurement logging per goal per session — writes goal_data_points" },
+  { value: "freetext_goallist", label: "Goal Checklist (smart-goals-session-checklist)", shortLabel: "Goal Checklist", description: "Lightweight goal checklist with notes per goal" },
+  { value: "freetext_v2goaladmin", label: "Goal Admin (smart-goal-admin-collection)", shortLabel: "Goal Admin", description: "Admin-configured components per goal — org sets up fields in Custom Form Editor" },
+  { value: "freetext_v2goalcustom", label: "Goal Custom (smart-goal-custom-collection)", shortLabel: "Goal Custom", description: "Therapist adds custom components per goal at fill time" },
 ];
 
 const DISCIPLINES = ["Speech", "OT", "PT"];
@@ -40,7 +40,7 @@ function formatGoalValue(value: string, goal: PatientGoal): string {
       const unit = (goal.measurement_config.unit as string) || "";
       return `${display} ${unit}`;
     }
-    case "binary": return display === "true" ? "Achieved" : "Not achieved";
+    case "binary": return display === "true" ? "Met" : "Not met";
     default: return display;
   }
 }
@@ -688,8 +688,8 @@ function FreeTextV2GoalAdmin() {
       </div>
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Goals w/ Admin Selected Components</h3>
-          <span className="text-xs font-medium text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">Possible new custom form component</span>
+          <h3 className="text-sm font-semibold text-gray-700">Goal Admin</h3>
+          <span className="text-xs font-medium text-violet-600 bg-violet-100 rounded-full px-2 py-0.5">Possible future iteration</span>
         </div>
         <div className="space-y-3">
           {speechGoals.map((goal) => (
@@ -756,7 +756,51 @@ function FreeTextV2GoalAdmin() {
 }
 
 function FreeTextV2GoalCustom() {
-  const speechGoals = mockGoals.filter((g) => g.discipline === "Speech" && g.current_status === "active" && g.goal_type !== "short_term");
+  const speechGoals: PatientGoal[] = [];
+  for (const g of mockGoals) {
+    if (g.discipline === "Speech" && g.current_status === "active") {
+      speechGoals.push(g);
+      for (const c of g.children) {
+        if (c.current_status === "active") speechGoals.push(c);
+      }
+    }
+  }
+
+  const [addedControls, setAddedControls] = useState<Record<string, { type: string; label: string; options: string }[]>>({});
+  const [showAddMenu, setShowAddMenu] = useState<string | null>(null);
+
+  const controlTypes = [
+    { value: "radio", label: "Radio Buttons" },
+    { value: "textarea", label: "Text Area" },
+    { value: "checkboxes", label: "Checkboxes" },
+    { value: "dropdown", label: "Select Dropdown" },
+    { value: "short_input", label: "Short Input" },
+    { value: "toggles", label: "Toggle Buttons" },
+  ];
+
+  function addControl(goalId: string, type: string, label: string) {
+    const defaults: Record<string, string> = {
+      radio: "Progressing,Plateau,Regression",
+      checkboxes: "Needs modification,Carryover noted",
+      dropdown: "Independent,Min,Mod,Max",
+      toggles: "Yes,No",
+    };
+    const existing = addedControls[goalId] || [];
+    setAddedControls({ ...addedControls, [goalId]: [...existing, { type, label, options: defaults[type] || "" }] });
+    setShowAddMenu(null);
+  }
+
+  function updateControlField(goalId: string, idx: number, field: "label" | "options", value: string) {
+    const existing = [...(addedControls[goalId] || [])];
+    existing[idx] = { ...existing[idx], [field]: value };
+    setAddedControls({ ...addedControls, [goalId]: existing });
+  }
+
+  function removeControl(goalId: string, idx: number) {
+    const existing = [...(addedControls[goalId] || [])];
+    existing.splice(idx, 1);
+    setAddedControls({ ...addedControls, [goalId]: existing });
+  }
 
   return (
     <div className="space-y-4">
@@ -766,22 +810,121 @@ function FreeTextV2GoalCustom() {
       </div>
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Goals w/ Custom Components</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Goal Custom</h3>
           <span className="text-xs font-medium text-violet-600 bg-violet-100 rounded-full px-2 py-0.5">Possible future iteration</span>
         </div>
-        <p className="text-xs text-gray-400 italic mb-3">Therapists can dynamically add components per goal. Uses V2 measurement types and functional levels.</p>
         <div className="space-y-3">
-          {speechGoals.map((goal) => (
-            <div key={goal.id}>
-              <V2GoalCard goal={goal}>{goal.children.filter((c) => c.current_status === "active")}</V2GoalCard>
-              <div className="mt-1 ml-1">
-                <button className="inline-flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 font-medium">
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                  Add component
-                </button>
+          {speechGoals.map((goal) => {
+            const goalLabel = goal.goal_type === "short_term" ? "Short Term Goal" : "Long Term Goal";
+            const isChild = goal.goal_type === "short_term";
+            const controls = addedControls[goal.id] || [];
+
+            return (
+              <div key={goal.id} className={`${isChild ? "ml-8" : ""}`}>
+                {isChild && <div className="text-gray-400 -ml-6 mb-1 text-sm">&#8627;</div>}
+                <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between px-4 py-2 bg-indigo-100/70">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-indigo-900">{goal.version_a}.{goal.version_b}.{goal.version_c} {goalLabel}</span>
+                      <span className="text-xs font-medium text-gray-500 capitalize">{goal.measurement_type}</span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-600">Active</span>
+                  </div>
+                  <div className="bg-gray-50/60 px-4 py-3 space-y-2">
+                    <p className="text-sm text-gray-600 leading-relaxed">{goal.goal_text}</p>
+
+                    {/* Added controls */}
+                    {controls.map((ctrl, idx) => {
+                      const opts = ctrl.options ? ctrl.options.split(",").map((o) => o.trim()).filter(Boolean) : [];
+                      const hasOptions = ["radio", "checkboxes", "dropdown", "toggles"].includes(ctrl.type);
+                      return (
+                        <div key={idx} className="border border-gray-200 rounded-lg px-3 py-2.5 bg-white space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-gray-400 uppercase font-medium">{controlTypes.find((c) => c.value === ctrl.type)?.label}</span>
+                            </div>
+                            <button onClick={() => removeControl(goal.id, idx)} className="text-xs text-gray-400 hover:text-red-500">&times; Remove</button>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-gray-500 mb-0.5">Label</label>
+                            <input value={ctrl.label} onChange={(e) => updateControlField(goal.id, idx, "label", e.target.value)} className="w-full border border-gray-200 rounded px-2.5 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                          </div>
+                          {hasOptions && (
+                            <div>
+                              <label className="block text-[11px] text-gray-500 mb-0.5">Options (comma separated)</label>
+                              <input value={ctrl.options} onChange={(e) => updateControlField(goal.id, idx, "options", e.target.value)} className="w-full border border-gray-200 rounded px-2.5 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                          )}
+                          {/* Live preview of the control */}
+                          <div className="border-t border-gray-100 pt-2">
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">{ctrl.label}</label>
+                            {ctrl.type === "textarea" && <textarea rows={1} placeholder={`Enter ${ctrl.label.toLowerCase()}...`} className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />}
+                            {ctrl.type === "short_input" && <input placeholder={`Enter ${ctrl.label.toLowerCase()}...`} className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />}
+                            {ctrl.type === "radio" && (
+                              <div className="flex flex-wrap gap-3">
+                                {opts.map((o) => (
+                                  <label key={o} className="flex items-center gap-1.5 text-xs text-gray-600"><input type="radio" name={`${goal.id}-${idx}`} className="w-3.5 h-3.5" />{o}</label>
+                                ))}
+                              </div>
+                            )}
+                            {ctrl.type === "checkboxes" && (
+                              <div className="flex flex-wrap gap-3">
+                                {opts.map((o) => (
+                                  <label key={o} className="flex items-center gap-1.5 text-xs text-gray-600"><input type="checkbox" className="w-3.5 h-3.5 rounded" />{o}</label>
+                                ))}
+                              </div>
+                            )}
+                            {ctrl.type === "dropdown" && (
+                              <select className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-sm">
+                                <option>Select...</option>
+                                {opts.map((o) => <option key={o}>{o}</option>)}
+                              </select>
+                            )}
+                            {ctrl.type === "toggles" && (
+                              <div className="flex gap-1.5">
+                                {opts.map((o) => (
+                                  <button key={o} className="px-3 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">{o}</button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Add component menu */}
+                    {showAddMenu === goal.id ? (
+                      <div className="border border-violet-200 rounded-lg p-2 bg-violet-50/50">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-semibold text-violet-700">Add a component</span>
+                          <button onClick={() => setShowAddMenu(null)} className="text-xs text-gray-400">&times;</button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {controlTypes.map((ct) => (
+                            <button
+                              key={ct.value}
+                              onClick={() => addControl(goal.id, ct.value, ct.label)}
+                              className="px-2.5 py-1 text-xs font-medium text-violet-600 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
+                            >
+                              + {ct.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowAddMenu(goal.id)}
+                        className="inline-flex items-center gap-1.5 text-xs text-violet-500 hover:text-violet-700 font-medium"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        Add component
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -813,10 +956,10 @@ function FreeTextGoalProgress() {
         <textarea rows={6} placeholder="Write your clinical note here..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
       </div>
 
-      {/* Goal Data Collection */}
+      {/* Goal Progress */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Goal Data Collection</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Goal Progress</h3>
           <span className="text-xs text-gray-400">{Object.values(updates).filter((u) => u.value).length} of {speechGoals.length} updated</span>
         </div>
         <div className="space-y-3">
@@ -952,7 +1095,7 @@ function FreeTextGoalList() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Session Checklist</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Goal Checklist</h3>
           <span className="text-xs text-gray-400">Check goals addressed this session</span>
         </div>
         <div className="space-y-3">
@@ -1384,7 +1527,7 @@ export default function VisitNoteNewView({ project = "goals_v2" }: { project?: "
   return (
     <div className="max-w-5xl mx-auto px-6 py-6">
       <DevNote
-        description='This page previews the new visit note creation flow. Use the "Showing" buttons to switch between possible visit note custom forms. "w/ Goal Admin Components" uses components pre-configured by org admins in the Custom Form Editor (per user request). "w/  Goals Custom Components" allows therapists to dynamically add components per goal at fill time (possible future iteration, but would be cool.'
+        description='This page previews the visit note creation flow. Use the "Showing" buttons to switch between goal components: Goal Checklist (checkbox + notes per goal), Goal Progress (measurement logging with trajectory), Goal Admin (admin-configured fields per goal), and Goal Custom (therapist dynamically adds controls per goal).'
         todos={[]}
       />
 

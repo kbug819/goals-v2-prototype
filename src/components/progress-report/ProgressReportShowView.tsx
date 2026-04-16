@@ -12,7 +12,7 @@ function formatValue(value: string, goal: PatientGoal): string {
     case "percentage": return `${display}%`;
     case "duration": return `${display} ${(goal.measurement_config.unit as string) || "seconds"}`;
     case "count": return `${display} ${(goal.measurement_config.unit as string) || ""}`;
-    case "binary": return display === "true" ? "Achieved" : "Not achieved";
+    case "binary": return display === "true" ? "Met" : "Not met";
     default: return display;
   }
 }
@@ -100,11 +100,11 @@ function GoalProgressSection({ goal, depth = 0 }: { goal: PatientGoal; depth?: n
 
   // Mock narrative based on goal
   const narratives: Record<string, string> = {
-    "pg-1": "Patient has demonstrated steady improvement in /r/ production across word positions. Currently at 72% accuracy, up from 45% baseline. Responds well to visual cues and minimal verbal prompting. /r/ blends showing particular improvement. Recommend continuing current approach with increased focus on conversational carryover.",
-    "pg-2": "Goal met on 04/01/2026. Patient achieved 92% accuracy for /r/ in initial position across 3 consecutive sessions with minimal verbal cues. Strong self-monitoring skills developed. Goal addressed through structured articulation drills and sentence-level practice.",
-    "pg-3": "Patient progressing toward target. Currently at 68% accuracy for final /r/, up from 40% baseline. -er endings remain the most challenging context. Visual modeling strategies have been beneficial. Recommend continued targeted practice with emphasis on self-correction strategies.",
-    "pg-4": "Patient has moved from maximal assist to moderate assist level for expressive language. Beginning to use sentence starters independently and formulating 3-4 word utterances with moderate cueing. Responds well to structured play-based activities. Recommend continuing with graduated reduction of supports.",
-    "pg-5": "MLU has increased from 2.5 to 3.1 words. Patient using more descriptors and conjunctions in spontaneous speech. Progress is steady but gradual. Targeting 4.0 words per utterance. Recommend story retell activities and descriptive language tasks to support continued growth.",
+    "sp-1": "Patient has demonstrated steady improvement in /r/ production across word positions. Currently at 72% accuracy, up from 45% baseline. Responds well to visual cues and minimal verbal prompting. /r/ blends showing particular improvement. Recommend continuing current approach with increased focus on conversational carryover.",
+    "sp-1-1": "Goal met on 04/01/2026. Patient achieved 92% accuracy for /r/ in initial position across 3 consecutive sessions with minimal verbal cues. Strong self-monitoring skills developed. Goal addressed through structured articulation drills and sentence-level practice.",
+    "sp-1-2": "Patient progressing toward target. Currently at 68% accuracy for final /r/, up from 40% baseline. -er endings remain the most challenging context. Visual modeling strategies have been beneficial. Recommend continued targeted practice with emphasis on self-correction strategies.",
+    "sp-2": "Patient has moved from maximal assist to moderate assist level for expressive language. Beginning to use sentence starters independently and formulating 3-4 word utterances with moderate cueing. Responds well to structured play-based activities. Recommend continuing with graduated reduction of supports.",
+    "sp-3": "MLU has increased from 2.5 to 3.1 words. Patient using more descriptors and conjunctions in spontaneous speech. Progress is steady but gradual. Targeting 4.0 words per utterance. Recommend story retell activities and descriptive language tasks to support continued growth.",
   };
 
   return (
@@ -382,11 +382,11 @@ function ProgressReportComparativeView() {
   // Mock previous period data (12/1/2025 - 2/28/2026)
   // Current period data comes from goal.data_points (3/1/2026 - 4/8/2026)
   const previousData: Record<string, { value: string; sessions: number }> = {
-    "pg-1": { value: "52", sessions: 8 },   // percentage: was 52%, now 72% → +20%
-    "pg-2": { value: "75", sessions: 6 },   // percentage (met STG): was 75%, ended at 92%
-    "pg-3": { value: "48", sessions: 7 },   // percentage: was 48%, now 68% → +20%
-    "pg-4": { value: "maximal_assist", sessions: 6 }, // scale: was maximal_assist, now moderate_assist → improved 2 levels
-    "pg-5": { value: "2.8", sessions: 5 },  // custom (MLU): was 2.8, now 3.1 → +0.3
+    "sp-1": { value: "52", sessions: 8 },   // percentage: was 52%, now 72% → +20%
+    "sp-1-1": { value: "75", sessions: 6 },   // percentage (met STG): was 75%, ended at 92%
+    "sp-1-2": { value: "48", sessions: 7 },   // percentage: was 48%, now 68% → +20%
+    "sp-2": { value: "maximal_assist", sessions: 6 }, // scale: was maximal_assist, now moderate_assist → improved 2 levels
+    "sp-3": { value: "2.8", sessions: 5 },  // custom (MLU): was 2.8, now 3.1 → +0.3
   };
 
   return (
@@ -471,7 +471,7 @@ function ProgressReportComparativeView() {
                     changeColor = diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500";
                   }
                 } else if (goal.measurement_type === "binary") {
-                  if (prev.value === "false" && currentVal === "true") { changeText = "Achieved"; changeColor = "text-green-600"; }
+                  if (prev.value === "false" && currentVal === "true") { changeText = "Met"; changeColor = "text-green-600"; }
                   else if (prev.value === "true" && currentVal === "false") { changeText = "Regressed"; changeColor = "text-red-600"; }
                   else { changeText = "No change"; }
                 }
@@ -676,9 +676,9 @@ function ProgressReportComparativeView() {
                       <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5">
                         <span className="text-[11px] font-semibold text-gray-500 block">Progress Narrative</span>
                         <span className="text-sm text-gray-600 italic">
-                          {goal.id === "pg-1" ? "Improved from 52% to 72% — strong response to visual cues and self-monitoring strategies." :
-                           goal.id === "pg-4" ? "Moved from maximal to moderate assist. Beginning to use sentence starters independently." :
-                           goal.id === "pg-5" ? "MLU increased from 2.8 to 3.1. Using more descriptors in spontaneous speech." :
+                          {goal.id === "sp-1" ? "Improved from 52% to 72% — strong response to visual cues and self-monitoring strategies." :
+                           goal.id === "sp-2" ? "Moved from maximal to moderate assist. Beginning to use sentence starters independently." :
+                           goal.id === "sp-3" ? "MLU increased from 2.8 to 3.1. Using more descriptors in spontaneous speech." :
                            "Progressing steadily toward target."}
                         </span>
                       </div>
