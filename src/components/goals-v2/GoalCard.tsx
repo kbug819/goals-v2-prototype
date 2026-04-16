@@ -372,9 +372,11 @@ export default function GoalCard({ goal, depth = 0, activeFilter }: { goal: Pati
       {/* Children */}
       {expanded && hasChildren && (
         <div className="space-y-2">
-          {goal.children.map((child) => (
-            <GoalCard key={child.id} goal={child} depth={depth + 1} activeFilter={activeFilter} />
-          ))}
+          {goal.children
+            .filter((child) => !activeFilter || activeFilter === "all" || child.current_status === activeFilter)
+            .map((child) => (
+              <GoalCard key={child.id} goal={child} depth={depth + 1} activeFilter={activeFilter} />
+            ))}
         </div>
       )}
     </div>
