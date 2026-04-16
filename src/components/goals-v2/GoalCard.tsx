@@ -68,14 +68,11 @@ function MeasurementDisplay({ goal }: { goal: PatientGoal }) {
   const curNum = parseFloat(currentVal);
   const range = targetNum - baseNum;
   const pct = range !== 0 ? Math.min(100, Math.max(0, Math.round(((curNum - baseNum) / range) * 100))) : 0;
-  const prevPct = previousDp && range !== 0 ? Math.min(100, Math.max(0, Math.round(((parseFloat(previousDp.value) - baseNum) / range) * 100))) : null;
 
   const unit = goal.measurement_type === "percentage" ? "%" :
     goal.measurement_type === "duration" ? ` ${(goal.measurement_config.unit as string) || "sec"}` :
     goal.measurement_type === "count" ? ` ${(goal.measurement_config.unit as string) || ""}` :
     goal.measurement_type === "custom" ? ` ${(goal.measurement_config.unit as string) || ""}` : "";
-  const label = goal.measurement_type === "custom" ? ((goal.measurement_config.label as string) || "Value") :
-    goal.measurement_type.charAt(0).toUpperCase() + goal.measurement_type.slice(1);
 
   return (
     <div className="w-full">
@@ -172,7 +169,6 @@ function DataPointsPanel({ goal }: { goal: PatientGoal }) {
       {/* Scale progression visual */}
       {(() => {
         if (goal.measurement_type !== "scale" || !goal.measurement_config.levels || points.length < 1) return null;
-        const levels = goal.measurement_config.levels as string[];
         return (
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-center gap-1">
