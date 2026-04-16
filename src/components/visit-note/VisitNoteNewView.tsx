@@ -21,7 +21,7 @@ const NOTE_FORMATS: { value: NoteFormat; label: string; shortLabel: string; desc
   { value: "freetext_goallist", label: "Goal Checklist (smart-goals-session-checklist)", shortLabel: "Goal Checklist", description: "Lightweight goal checklist with notes per goal" },
   { value: "freetext_v2goaladmin", label: "Goal Admin (smart-goal-admin-collection)", shortLabel: "Goal Admin", description: "Admin-configured components per goal — org sets up fields in Custom Form Editor" },
   { value: "freetext_v2goalcustom", label: "Goal Custom (smart-goal-custom-collection)", shortLabel: "Goal Custom", description: "Therapist adds custom components per goal at fill time" },
-  { value: "integrated_soap", label: "Integrated SOAP (smart-goals-soap-objective)", shortLabel: "Integrated SOAP", description: "SOAP format with goals replacing the Objective section — data collection inline" },
+  { value: "integrated_soap", label: "Integrated SOAP (smart-goals-soap-objective)", shortLabel: "Integrated SOAP", description: "SOAP format with goals replacing the Objective section — possible future iteration" },
 ];
 
 const DISCIPLINES = ["Speech", "OT", "PT"];
@@ -1198,7 +1198,8 @@ function IntegratedSoap() {
       {/* Objective — Goals replace the free text */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <label className="block text-sm font-semibold text-gray-800">Objective — Goal Progress</label>
+          <label className="text-sm font-semibold text-gray-800">Objective — Goal Progress</label>
+          <span className="ml-2 text-xs font-medium text-violet-600 bg-violet-100 rounded-full px-2 py-0.5">Possible future iteration</span>
           <span className="text-xs text-gray-400">{Object.values(updates).filter((u) => u.value).length} of {speechGoals.length} updated</span>
         </div>
         <div className="space-y-3">
