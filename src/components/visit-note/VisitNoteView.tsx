@@ -890,8 +890,8 @@ export default function VisitNoteView({ project = "goals_v2" }: { project?: "vnc
             <div>
               <h4 className="text-sm font-semibold text-gray-800 mb-2">Objective — Goal Progress</h4>
               <div className="space-y-3">
-                {speechGoals.filter((g) => g.goal_type !== "short_term").map((goal) => {
-                  const children = speechGoals.filter((c) => c.parent_id === goal.id);
+                {speechGoals.filter((g) => g.goal_type !== "short_term").slice(0, 2).map((goal) => {
+                  const children = speechGoals.filter((c) => c.parent_id === goal.id).slice(0, 1);
                   return (
                     <div key={goal.id}>
                       <GoalDataShowCard goal={goal} />
