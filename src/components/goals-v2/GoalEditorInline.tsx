@@ -312,7 +312,7 @@ const SCALE_PRESETS: { name: string; levels: string[] }[] = [
   { name: "Assistance Level", levels: ["dependent", "maximal_assist", "moderate_assist", "minimal_assist", "supervision", "independent"] },
   { name: "Cueing Level", levels: ["full_physical", "partial_physical", "full_verbal", "partial_verbal", "gestural", "independent"] },
   { name: "Frequency", levels: ["never", "rarely", "sometimes", "often", "usually", "always"] },
-  { name: "Progress Status", levels: ["not_achieved", "see_comments", "progressing_inconsistently", "progressing_gradually", "progressing_satisfactorily", "achieved"] },
+  { name: "Progress Status", levels: ["see_comments", "not_achieved", "progressing_inconsistently", "progressing_gradually", "progressing_satisfactorily", "achieved"] },
 ];
 
 const COUNT_UNIT_PRESETS = ["trials", "requests", "repetitions", "occurrences", "attempts", "steps", "feet"];
